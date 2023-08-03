@@ -12,18 +12,18 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # 設置您要監聽的頻道 ID
-guild_id = os.getenv("guild_id") #伺服器 ID
-CHANNEL_ID = os.getenv("CHANNEL_ID") #架上有幾盤布蕾
-CHANNEL_ID2 = os.getenv("CHANNEL_ID2") #離開
-CHANNEL_ID3 = os.getenv("CHANNEL_ID3") # ban
-CHANNEL_ID4 = os.getenv("CHANNEL_ID4") #規則
-CHANNEL_ID5 = os.getenv("CHANNEL_ID5") #指南
-CHANNEL_ID6 = os.getenv("CHANNEL_ID6") #櫃台(新手詢問處)
-CHANNEL_ID7 = os.getenv("CHANNEL_ID7") #自介
-CHANNEL_ID8 = os.getenv("CHANNEL_ID8") #遊戲
-CHANNEL_ID9 = os.getenv("CHANNEL_ID9") #身分
-CHANNEL_ID10 = os.getenv("CHANNEL_ID10") #管理指令區
-CHANNEL_ID11 = os.getenv("CHANNEL_ID11") #改名區
+guild_id = int(os.getenv("guild_id")) #伺服器 ID
+CHANNEL_ID = int(os.getenv("CHANNEL_ID")) #架上有幾盤布蕾
+CHANNEL_ID2 = int(os.getenv("CHANNEL_ID2")) #離開
+CHANNEL_ID3 = int(os.getenv("CHANNEL_ID3")) # ban
+CHANNEL_ID4 = int(os.getenv("CHANNEL_ID4")) #規則
+CHANNEL_ID5 = int(os.getenv("CHANNEL_ID5")) #指南
+CHANNEL_ID6 = int(os.getenv("CHANNEL_ID6")) #櫃台(新手詢問處)
+CHANNEL_ID7 = int(os.getenv("CHANNEL_ID7")) #自介
+CHANNEL_ID8 = int(os.getenv("CHANNEL_ID8")) #遊戲
+CHANNEL_ID9 = int(os.getenv("CHANNEL_ID9")) #身分
+CHANNEL_ID10 = int(os.getenv("CHANNEL_ID10")) #管理指令區
+CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
 
 @bot.event
 async def on_ready():

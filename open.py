@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 import re
 import time
+import json
+import random
 
 from dotenv import load_dotenv
 import os
@@ -24,6 +26,8 @@ CHANNEL_ID8 = int(os.getenv("CHANNEL_ID8")) #遊戲
 CHANNEL_ID9 = int(os.getenv("CHANNEL_ID9")) #身分
 CHANNEL_ID10 = int(os.getenv("CHANNEL_ID10")) #管理指令區
 CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
+CHANNEL_ID12 = int(os.getenv("CHANNEL_ID12")) #改名區
+id_card = int(os.getenv("id_card")) #一次改名卡
 
 @bot.event
 async def on_ready():
@@ -121,8 +125,8 @@ async def on_message(message):
             # 更改暱稱
             await message.author.edit(nick=new_nickname)
             await message.channel.send(f"已將您的暱稱更改為 {new_nickname}")          
-            # # 從使用者身分組中移除一次性改名卡身分組
-            rename_role = discord.utils.get(message.guild.roles, id=1135494950595874826)
+            # 從使用者身分組中移除一次性改名卡身分組
+            rename_role = discord.utils.get(message.guild.roles, id=id_card)
             if rename_role:
                 await message.author.remove_roles(rename_role)                
         except discord.errors.Forbidden:
@@ -132,7 +136,23 @@ async def on_message(message):
 
     # ----- 布蕾答案書(^) -----
 
+    if message.channel.id == CHANNEL_ID12:
+        context = classify_dialogue(message)
+        data_folder = "data"
+        json_file_name = "ask.json"
+        json_file_path = os.path.join(data_folder, json_file_name)
 
+        try:
+            json_data = read_json_file(json_file_path)
+            num_answers = len(json_data)
+            random_number = random.randint(1, num_answers)
+            selected_answer = json_data[str(random_number)]["answer"]
+
+            await message.channel.send(selected_answer)
+        except FileNotFoundError:
+            await message.channel.send("找不到指定的 JSON 檔案：file1.json")
+        except json.JSONDecodeError:
+            await message.channel.send("無法解析 JSON 檔案：file1.json")
 
     # ----- 布蕾答案書(v) -----
 
@@ -170,9 +190,29 @@ async def on_member_join(member):
 async def on_member_remove(member):
 
     channel = bot.get_channel(CHANNEL_ID2)
+
+    embed = discord.Embed(color=discord.Color(0xFFB6C1))
+    avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
+    embed.set_author(name=member.display_name, icon_url=avatar_url)
+    # embed.set_thumbnail(url=avatar_url)  # Use member.avatar.url to get the avatar URL.
+    embed.set_image(url=avatar_url)
+    embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
+    embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)
+    embed.add_field(name='自訂狀態', value=member.activity.name if member.activity else '無', inline=False)
+    embed.add_field(name='加入伺服器時間', value=member.joined_at, inline=False)
+    embed.add_field(name='建立 Discord 帳號時間', value=member.created_at, inline=False)
+    embed.add_field(name='Nitro', value=member.premium_since, inline=False)
+    locale = member.guild.preferred_locale
+    embed.add_field(name='語言', value=locale, inline=False)    
+    sorted_roles = sorted(member.roles, key=lambda role: role.position, reverse=True)
+    roles_ids = [f"<@&{role.id}>" if role.id != CHANNEL_ID2 else '無' for role in sorted_roles]
+    roles_str = '\n'.join(roles_ids)
+    embed.add_field(name='擁有角色', value=roles_str, inline=False)
+
+    
     member_link = f"<@!{member.id}>"
     message = f"{member_link} 帶走了一盤布蕾ﾍ( ﾟ∀ﾟ;)ﾉ"
-    await channel.send(message)
+    await channel.send(content=message,embed=embed)
 
     # 更新架上有幾盤布蕾
     guild = member.guild
@@ -184,7 +224,6 @@ async def on_member_remove(member):
         await update_channel_name(guild, channel)
         last_executed_time = current_time
   
-
 @bot.event
 async def on_member_ban(guild, user):
 
@@ -200,6 +239,32 @@ async def update_channel_name(guild, channel):
     member_count = guild.member_count
     new_channel_name = f'架上有{member_count}盤布蕾'
     await channel.edit(name=new_channel_name)
+
+def read_json_file(file_path, encoding='utf-8'):
+    with open(file_path, 'r', encoding=encoding) as f:
+        data = json.load(f)
+    return data
+
+# 定義關鍵字的情境分類和對應的 JSON 檔案
+keywords = {
+    "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],    
+    "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好"],
+    "thanks.json": ["謝謝", "感謝", "多謝"],
+    "complain.json": ["不開心", "不滿意", "不爽", "抱怨"],
+    "happy.json": ["開心", "高興", "快樂"],
+    "sad.json": ["難過", "悲傷", "傷心"],
+    "comfort.json": ["安慰", "鼓勵", "撫慰"],
+    "suggest.json": ["建議", "建議一下", "你可以試試"],
+    "educate.json": ["教育", "學習", "了解一下"],
+}
+
+# 根據對話中的關鍵字分類情境
+def classify_dialogue(message):
+    for context, keywords_list in keywords.items():
+        for keyword in keywords_list:
+            if keyword in message.content:
+                return context
+    return "ask.json"  # 預設為 "ask" 情境
 
 #TOKEN 在剛剛 Discord Developer 那邊「BOT」頁面裡面
 bot.run(os.getenv("BOT_TOKEN2")) #布蕾

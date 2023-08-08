@@ -139,7 +139,7 @@ async def on_message(message):
     if message.channel.id == CHANNEL_ID12:
         context = classify_dialogue(message)
         data_folder = "data"
-        json_file_name = "ask.json"
+        json_file_name = context
         json_file_path = os.path.join(data_folder, json_file_name)
 
         try:
@@ -199,8 +199,6 @@ async def on_member_remove(member):
     embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)
     embed.add_field(name='自訂狀態', value=member.activity.name if member.activity else '無', inline=False)
-    embed.add_field(name='加入伺服器時間', value=member.joined_at, inline=False)
-    embed.add_field(name='建立 Discord 帳號時間', value=member.created_at, inline=False)
     embed.add_field(name='Nitro', value=member.premium_since, inline=False)
     locale = member.guild.preferred_locale
     embed.add_field(name='語言', value=locale, inline=False)    
@@ -208,6 +206,8 @@ async def on_member_remove(member):
     roles_ids = [f"<@&{role.id}>" if role.id != CHANNEL_ID2 else '無' for role in sorted_roles]
     roles_str = '\n'.join(roles_ids)
     embed.add_field(name='擁有角色', value=roles_str, inline=False)
+    embed.add_field(name='加入伺服器時間', value=member.joined_at, inline=False)
+    embed.add_field(name='建立 Discord 帳號時間', value=member.created_at, inline=False)
 
     
     member_link = f"<@!{member.id}>"
@@ -250,12 +250,8 @@ keywords = {
     "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],    
     "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好"],
     "thanks.json": ["謝謝", "感謝", "多謝"],
-    "complain.json": ["不開心", "不滿意", "不爽", "抱怨"],
-    "happy.json": ["開心", "高興", "快樂"],
-    "sad.json": ["難過", "悲傷", "傷心"],
-    "comfort.json": ["安慰", "鼓勵", "撫慰"],
-    "suggest.json": ["建議", "建議一下", "你可以試試"],
-    "educate.json": ["教育", "學習", "了解一下"],
+    "like.json": ["喜歡布蕾"],
+    "hat.json": ["討厭布蕾","不喜歡布蕾"],
 }
 
 # 根據對話中的關鍵字分類情境

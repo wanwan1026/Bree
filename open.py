@@ -161,7 +161,7 @@ async def on_message(message):
 async def on_member_join(member):
 
     # 取得新成員的名稱和 ID
-    new_member_name = member.display_name
+    new_member_name = member.global_name
 
     # 計算 prefix 和 suffix 的長度
     prefix = "‧˚✮₊"
@@ -193,8 +193,8 @@ async def on_member_remove(member):
 
     embed = discord.Embed(color=discord.Color(0xFFB6C1))
     avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
-    embed.set_author(name=member.display_name, icon_url=avatar_url)
-    # embed.set_thumbnail(url=avatar_url)  # Use member.avatar.url to get the avatar URL.
+    # embed.set_author(name=member.display_name, icon_url=avatar_url)
+    embed.set_thumbnail(url=avatar_url)  # Use member.avatar.url to get the avatar URL.
     embed.set_image(url=avatar_url)
     embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)

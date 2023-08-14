@@ -29,6 +29,14 @@ CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
 CHANNEL_ID12 = int(os.getenv("CHANNEL_ID12")) #改名區
 id_card = int(os.getenv("id_card")) #一次改名卡
 
+ROLE_ID1 = int(os.getenv("ROLE_ID1")) 
+ROLE_ID2 = int(os.getenv("ROLE_ID2")) 
+ROLE_ID3 = int(os.getenv("ROLE_ID3")) 
+ROLE_ID4 = int(os.getenv("ROLE_ID4")) 
+ROLE_ID5 = int(os.getenv("ROLE_ID5")) 
+ROLE_ID6 = int(os.getenv("ROLE_ID6")) 
+ROLE_ID7 = int(os.getenv("ROLE_ID7")) 
+
 @bot.event
 async def on_ready():
     print('目前登入身份：', bot.user)
@@ -150,9 +158,9 @@ async def on_message(message):
 
             await message.channel.send(selected_answer)
         except FileNotFoundError:
-            await message.channel.send("找不到指定的 JSON 檔案：file1.json")
+            await message.channel.send("Bot 出現錯誤，請洽模組櫻花。")
         except json.JSONDecodeError:
-            await message.channel.send("無法解析 JSON 檔案：file1.json")
+            await message.channel.send("Bot 出現錯誤，請洽模組櫻花。")
 
     # ----- 布蕾答案書(v) -----
 
@@ -162,6 +170,10 @@ async def on_member_join(member):
 
     # 取得新成員的名稱和 ID
     new_member_name = member.global_name
+
+    if new_member_name is None:
+        # 如果新成員名稱為 None，則使用預設名稱或其他處理方式
+        new_member_name = member.display_name
 
     # 計算 prefix 和 suffix 的長度
     prefix = "‧˚✮₊"
@@ -193,18 +205,27 @@ async def on_member_remove(member):
 
     embed = discord.Embed(color=discord.Color(0xFFB6C1))
     avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
-    # embed.set_author(name=member.display_name, icon_url=avatar_url)
+    embed.set_author(name=member.display_name, icon_url=avatar_url)
     embed.set_thumbnail(url=avatar_url)  # Use member.avatar.url to get the avatar URL.
-    embed.set_image(url=avatar_url)
+    # embed.set_image(url=avatar_url)
     embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)
     embed.add_field(name='自訂狀態', value=member.activity.name if member.activity else '無', inline=False)
     embed.add_field(name='Nitro', value=member.premium_since, inline=False)
     locale = member.guild.preferred_locale
-    embed.add_field(name='語言', value=locale, inline=False)    
-    sorted_roles = sorted(member.roles, key=lambda role: role.position, reverse=True)
-    roles_ids = [f"<@&{role.id}>" if role.id != CHANNEL_ID2 else '無' for role in sorted_roles]
-    roles_str = '\n'.join(roles_ids)
+    embed.add_field(name='語言', value=locale, inline=False)   
+
+    # 要過濾的身分組 ID
+    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7] 
+    # 過濾掉特定身分組
+    remaining_roles = [role for role in member.roles if role.id not in filtered_role_ids]
+    if remaining_roles:
+        sorted_roles = sorted(remaining_roles, key=lambda role: role.position, reverse=True)
+        roles_ids = [f"<@&{role.id}>" for role in sorted_roles]
+        roles_str = '\n'.join(roles_ids)
+    else:
+        roles_str = '無'
+
     embed.add_field(name='擁有角色', value=roles_str, inline=False)
     embed.add_field(name='加入伺服器時間', value=member.joined_at, inline=False)
     embed.add_field(name='建立 Discord 帳號時間', value=member.created_at, inline=False)
@@ -246,12 +267,12 @@ def read_json_file(file_path, encoding='utf-8'):
     return data
 
 # 定義關鍵字的情境分類和對應的 JSON 檔案
-keywords = {
-    "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],    
-    "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好"],
+keywords = {    
+    "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好", "早安", "午安", "晚安"],
     "thanks.json": ["謝謝", "感謝", "多謝"],
     "like.json": ["喜歡布蕾"],
     "hat.json": ["討厭布蕾","不喜歡布蕾"],
+    "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],
 }
 
 # 根據對話中的關鍵字分類情境

@@ -27,6 +27,7 @@ CHANNEL_ID9 = int(os.getenv("CHANNEL_ID9")) #身分
 CHANNEL_ID10 = int(os.getenv("CHANNEL_ID10")) #管理指令區
 CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
 CHANNEL_ID12 = int(os.getenv("CHANNEL_ID12")) #改名區
+CHANNEL_ID13 = int(os.getenv("CHANNEL_ID13")) # ban 留存
 id_card = int(os.getenv("id_card")) #一次改名卡
 
 ROLE_ID1 = int(os.getenv("ROLE_ID1")) 
@@ -54,30 +55,44 @@ async def on_message(message):
     # ----- BAN 掉發其他群鏈結的成員(^) -----
 
     # 獲取機器人所在伺服器的 ID
-    bot_guild_id = guild_id
+    bot_guild_id = guild_id    
 
-    # 如果消息是機器人所在伺服器的邀請連結，則忽略
-    if message.guild.id == bot_guild_id and 'discord.gg/' in message.content:
-        return       
+    # 如果消息包含 Discord 伺服器邀請連結     
+    link_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    links = re.findall(link_pattern, message.content)
+    if not message.author.guild_permissions.manage_messages:
+        for link in links:
+            if "discord.gg" in link:
+                invite_code = link.split('/')[-1]
+                try:
+                    invite = await bot.fetch_invite(invite_code)
+                    if invite is not None and invite.guild.id != bot_guild_id:
+                        
+                        channel_ban = bot.get_channel(CHANNEL_ID13)
+                        await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}") 
 
-    # 如果消息包含 Discord 伺服器邀請連結
-    if 'discord.gg/' in message.content:
-        if not message.author.guild_permissions.manage_messages:
-            # 停權該成員
-            await message.author.ban(reason="散布 Discord 伺服器邀請連結")
-            # 刪除該訊息
-            try:
-                # 刪除該訊息
-                await message.delete()
-            except discord.NotFound:
-                pass
-            # 發送一條新訊息通知該成員已遭剔除
-            await message.channel.send(f"{message.author.name} 因為不乖乖被布蕾吃掉了！")
+                        # 停權該成員
+                        await message.author.ban(reason="散布 Discord 伺服器邀請連結")
+                        # 刪除該訊息
+                        try:
+                            # 刪除該訊息
+                            await message.delete()
+                        except discord.NotFound:
+                            pass
+                        await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
+                    else:
+                        await message.channel.send(f"{message.author.global_name} 布蕾很開心有你幫忙宣傳！")
+                except discord.errors.NotFound:
+                    pass    
 
     # 使用正規表達式檢查訊息是否包含 Line 群組邀請連結
     line_invitation_pattern = r"https://line.me/R/ti/g/"
     if re.search(line_invitation_pattern, message.content):
         if not message.author.guild_permissions.manage_messages:
+
+            channel_ban = bot.get_channel(CHANNEL_ID13)
+            await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
+
             # 停權該成員
             await message.author.ban(reason="散布 Line 群組邀請連結")
             # 刪除該訊息
@@ -87,12 +102,16 @@ async def on_message(message):
             except discord.NotFound:
                 pass
             # 發送一條新訊息通知該成員已遭剔除
-            await message.channel.send(f"{message.author.name} 因為不乖乖被布蕾吃掉了！")
+            await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
     # 使用正規表達式檢查訊息是否包含 LINE 社群邀請連結
     line_community_pattern = r"https://line.me/ti/g2/"
     if re.search(line_community_pattern, message.content):
         if not message.author.guild_permissions.manage_messages:
+
+            channel_ban = bot.get_channel(CHANNEL_ID13)
+            await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
+
             # 停權該成員
             await message.author.ban(reason="散布 LINE 社群邀請連結")
             # 刪除該訊息
@@ -102,7 +121,7 @@ async def on_message(message):
             except discord.NotFound:
                 pass
             # 發送一條新訊息通知該成員已遭剔除
-            await message.channel.send(f"{message.author.name} 因為不乖乖被布蕾吃掉了！")
+            await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
     # ----- BAN 掉發其他群鏈結的成員(v) -----
 
@@ -210,7 +229,8 @@ async def on_member_remove(member):
     # embed.set_image(url=avatar_url)
     embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)
-    embed.add_field(name='自訂狀態', value=member.activity.name if member.activity else '無', inline=False)
+    activity_name = getattr(member.activity, 'name', '無')
+    embed.add_field(name='自訂狀態', value=activity_name, inline=False)
     embed.add_field(name='Nitro', value=member.premium_since, inline=False)
     locale = member.guild.preferred_locale
     embed.add_field(name='語言', value=locale, inline=False)   
@@ -247,10 +267,40 @@ async def on_member_remove(member):
   
 @bot.event
 async def on_member_ban(guild, user):
-
+    member = guild.get_member(user.id)
     target_channel = bot.get_channel(CHANNEL_ID3)    
     w1_channel = bot.get_channel(CHANNEL_ID4)
-    await target_channel.send(f"因 {user.name} 屢次違反伺服器 {w1_channel.mention} 故而送往報銷室報廢。")
+
+    embed = discord.Embed(color=discord.Color(0xFFB6C1))
+    avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
+    embed.set_author(name=user.display_name, icon_url=avatar_url)
+    embed.set_thumbnail(url=avatar_url)  # Use member.avatar.url to get the avatar URL.
+    # embed.set_image(url=avatar_url)
+    embed.add_field(name='使用者名稱', value=user.display_name, inline=True)
+    embed.add_field(name='加好友 ID', value=f"{user.name}#{user.discriminator}", inline=True)
+    activity_name = getattr(member.activity, 'name', '無')
+    embed.add_field(name='自訂狀態', value=activity_name, inline=False)
+    embed.add_field(name='Nitro', value=user.premium_since, inline=False)
+    locale = user.guild.preferred_locale
+    embed.add_field(name='語言', value=locale, inline=False)   
+
+    # 要過濾的身分組 ID
+    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7] 
+    # 過濾掉特定身分組
+    remaining_roles = [role for role in user.roles if role.id not in filtered_role_ids]
+    if remaining_roles:
+        sorted_roles = sorted(remaining_roles, key=lambda role: role.position, reverse=True)
+        roles_ids = [f"<@&{role.id}>" for role in sorted_roles]
+        roles_str = '\n'.join(roles_ids)
+    else:
+        roles_str = '無'
+
+    embed.add_field(name='擁有角色', value=roles_str, inline=False)
+    embed.add_field(name='加入伺服器時間', value=user.joined_at, inline=False)
+    embed.add_field(name='建立 Discord 帳號時間', value=user.created_at, inline=False)
+    message = f"因 {user.display_name} 屢次違反伺服器 {w1_channel.mention} 故而送往報銷室報廢。"
+
+    await target_channel.send(content=message,embed=embed)
 
 # 記錄上一次執行 update_channel_name 的時間戳
 last_executed_time = 0

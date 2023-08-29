@@ -229,7 +229,8 @@ async def on_member_remove(member):
     # embed.set_image(url=avatar_url)
     embed.add_field(name='使用者名稱', value=member.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{member.name}#{member.discriminator}", inline=True)
-    activity_name = getattr(member.activity, 'name', '無')
+    activity = member.activity
+    activity_name = activity.name if activity else '無'
     embed.add_field(name='自訂狀態', value=activity_name, inline=False)
     embed.add_field(name='Nitro', value=member.premium_since, inline=False)
     locale = member.guild.preferred_locale
@@ -278,7 +279,8 @@ async def on_member_ban(guild, user):
     # embed.set_image(url=avatar_url)
     embed.add_field(name='使用者名稱', value=user.display_name, inline=True)
     embed.add_field(name='加好友 ID', value=f"{user.name}#{user.discriminator}", inline=True)
-    activity_name = getattr(member.activity, 'name', '無')
+    activity = member.activity
+    activity_name = activity.name if activity else '無'
     embed.add_field(name='自訂狀態', value=activity_name, inline=False)
     embed.add_field(name='Nitro', value=user.premium_since, inline=False)
     locale = user.guild.preferred_locale

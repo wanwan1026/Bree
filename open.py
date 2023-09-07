@@ -5,6 +5,7 @@ import re
 import time
 import json
 import random
+import asyncio
 
 from dotenv import load_dotenv
 import os
@@ -28,6 +29,8 @@ CHANNEL_ID10 = int(os.getenv("CHANNEL_ID10")) #管理指令區
 CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
 CHANNEL_ID12 = int(os.getenv("CHANNEL_ID12")) #改名區
 CHANNEL_ID13 = int(os.getenv("CHANNEL_ID13")) # ban 留存
+CHANNEL_ID14 = int(os.getenv("CHANNEL_ID14")) # 中秋參加
+CHANNEL_ID15 = int(os.getenv("CHANNEL_ID15")) # 中秋留存
 id_card = int(os.getenv("id_card")) #一次改名卡
 
 ROLE_ID1 = int(os.getenv("ROLE_ID1")) 
@@ -175,13 +178,44 @@ async def on_message(message):
             random_number = random.randint(1, num_answers)
             selected_answer = json_data[str(random_number)]["answer"]
 
-            await message.channel.send(selected_answer)
+            max_retries = 3  # 最大重試次數
+            retry_delay = 5  # 重試之間的延遲（秒）
+
+            for _ in range(max_retries):
+                try:
+                    await message.channel.send(selected_answer)
+                    break  # 如果成功發送訊息，則退出循環
+                except Exception as e:
+                    await asyncio.sleep(retry_delay)           
         except FileNotFoundError:
             await message.channel.send("Bot 出現錯誤，請洽模組櫻花。")
         except json.JSONDecodeError:
             await message.channel.send("Bot 出現錯誤，請洽模組櫻花。")
 
     # ----- 布蕾答案書(v) -----
+
+    # ----- 中秋抓訊息(^) -----
+
+    if message.channel.id == CHANNEL_ID14:
+
+        channel_act00 = bot.get_channel(CHANNEL_ID14)
+        channel_act = bot.get_channel(CHANNEL_ID15)
+        member_link = f"<@!{message.author.id}>"
+
+        max_retries = 3  # 最大重試次數
+        retry_delay = 5  # 重試之間的延遲（秒）
+
+        for _ in range(max_retries):
+            try:
+                await channel_act00.send(f"{member_link} 感謝您的參與 (❍ᴥ❍ʋ)")
+                await channel_act.send(f"{member_link} ，作品訊息：{message.content}", files=[await f.to_file() for f in message.attachments])
+                await message.delete()
+                break  # 成功後跳出循環
+            except Exception as e:
+                await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+
+    # ----- 中秋抓訊息(v) -----
+    
 
 # 監聽成員加入事件
 @bot.event
@@ -322,7 +356,7 @@ def read_json_file(file_path, encoding='utf-8'):
 keywords = {    
     "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好", "早安", "午安", "晚安"],
     "thanks.json": ["謝謝", "感謝", "多謝"],
-    "like.json": ["喜歡布蕾"],
+    "like.json": ["喜歡布蕾",],
     "hat.json": ["討厭布蕾","不喜歡布蕾"],
     "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],
 }

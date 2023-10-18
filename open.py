@@ -6,6 +6,8 @@ import time
 import json
 import random
 import asyncio
+import psutil
+from datetime import datetime
 
 from dotenv import load_dotenv
 import os
@@ -29,8 +31,9 @@ CHANNEL_ID10 = int(os.getenv("CHANNEL_ID10")) #管理指令區
 CHANNEL_ID11 = int(os.getenv("CHANNEL_ID11")) #改名區
 CHANNEL_ID12 = int(os.getenv("CHANNEL_ID12")) #改名區
 CHANNEL_ID13 = int(os.getenv("CHANNEL_ID13")) # ban 留存
-CHANNEL_ID14 = int(os.getenv("CHANNEL_ID14")) # 中秋參加
-CHANNEL_ID15 = int(os.getenv("CHANNEL_ID15")) # 中秋留存
+CHANNEL_ID14 = int(os.getenv("CHANNEL_ID14")) # 自介發布
+CHANNEL_ID15 = int(os.getenv("CHANNEL_ID15")) # 自介留存
+CHANNEL_ID17 = int(os.getenv("CHANNEL_ID17")) # 流水麵線
 id_card = int(os.getenv("id_card")) #一次改名卡
 
 ROLE_ID1 = int(os.getenv("ROLE_ID1")) 
@@ -48,6 +51,9 @@ async def on_ready():
     #discord.Status.<狀態>，可以是online,offline,idle,dnd,invisible
     await bot.change_presence(status=discord.Status.idle, activity=game)
 
+# 紀錄最后一次使用改名功能的時間的字典
+last_rename_time = {}
+
 @bot.event
 async def on_message(message):
 
@@ -60,71 +66,72 @@ async def on_message(message):
     # 獲取機器人所在伺服器的 ID
     bot_guild_id = guild_id    
 
-    # 如果消息包含 Discord 伺服器邀請連結     
-    link_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-    links = re.findall(link_pattern, message.content)
-    if not message.author.guild_permissions.manage_messages:
-        for link in links:
-            if "discord.gg" in link:
-                invite_code = link.split('/')[-1]
-                try:
-                    invite = await bot.fetch_invite(invite_code)
-                    if invite is not None and invite.guild.id != bot_guild_id:
-                        
-                        channel_ban = bot.get_channel(CHANNEL_ID13)
-                        await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}") 
+    if contains_http_or_https(message.content):
+        # 如果消息包含 Discord 伺服器邀請連結     
+        link_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        links = re.findall(link_pattern, message.content)
+        if not message.author.guild_permissions.manage_messages:
+            for link in links:
+                if "discord.gg" in link:
+                    invite_code = link.split('/')[-1]
+                    try:
+                        invite = await bot.fetch_invite(invite_code)
+                        if invite is not None and invite.guild.id != bot_guild_id:
+                            
+                            channel_ban = bot.get_channel(CHANNEL_ID13)
+                            await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}") 
 
-                        # 停權該成員
-                        await message.author.ban(reason="散布 Discord 伺服器邀請連結")
-                        # 刪除該訊息
-                        try:
+                            # 停權該成員
+                            await message.author.ban(reason="散布 Discord 伺服器邀請連結")
                             # 刪除該訊息
-                            await message.delete()
-                        except discord.NotFound:
-                            pass
-                        await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
-                    else:
-                        await message.channel.send(f"{message.author.global_name} 布蕾很開心有你幫忙宣傳！")
-                except discord.errors.NotFound:
-                    pass    
+                            try:
+                                # 刪除該訊息
+                                await message.delete()
+                            except discord.NotFound:
+                                pass
+                            await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
+                        else:
+                            await message.channel.send(f"{message.author.global_name} 布蕾很開心有你幫忙宣傳！")
+                    except discord.errors.NotFound:
+                        pass    
 
-    # 使用正規表達式檢查訊息是否包含 Line 群組邀請連結
-    line_invitation_pattern = r"https://line.me/R/ti/g/"
-    if re.search(line_invitation_pattern, message.content):
-        if not message.author.guild_permissions.manage_messages:
+        # 使用正規表達式檢查訊息是否包含 Line 群組邀請連結
+        line_invitation_pattern = r"https://line.me/R/ti/g/"
+        if re.search(line_invitation_pattern, message.content):
+            if not message.author.guild_permissions.manage_messages:
 
-            channel_ban = bot.get_channel(CHANNEL_ID13)
-            await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
+                channel_ban = bot.get_channel(CHANNEL_ID13)
+                await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
-            # 停權該成員
-            await message.author.ban(reason="散布 Line 群組邀請連結")
-            # 刪除該訊息
-            try:
+                # 停權該成員
+                await message.author.ban(reason="散布 Line 群組邀請連結")
                 # 刪除該訊息
-                await message.delete()
-            except discord.NotFound:
-                pass
-            # 發送一條新訊息通知該成員已遭剔除
-            await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
+                try:
+                    # 刪除該訊息
+                    await message.delete()
+                except discord.NotFound:
+                    pass
+                # 發送一條新訊息通知該成員已遭剔除
+                await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
-    # 使用正規表達式檢查訊息是否包含 LINE 社群邀請連結
-    line_community_pattern = r"https://line.me/ti/g2/"
-    if re.search(line_community_pattern, message.content):
-        if not message.author.guild_permissions.manage_messages:
+        # 使用正規表達式檢查訊息是否包含 LINE 社群邀請連結
+        line_community_pattern = r"https://line.me/ti/g2/"
+        if re.search(line_community_pattern, message.content):
+            if not message.author.guild_permissions.manage_messages:
 
-            channel_ban = bot.get_channel(CHANNEL_ID13)
-            await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
+                channel_ban = bot.get_channel(CHANNEL_ID13)
+                await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
-            # 停權該成員
-            await message.author.ban(reason="散布 LINE 社群邀請連結")
-            # 刪除該訊息
-            try:
+                # 停權該成員
+                await message.author.ban(reason="散布 LINE 社群邀請連結")
                 # 刪除該訊息
-                await message.delete()
-            except discord.NotFound:
-                pass
-            # 發送一條新訊息通知該成員已遭剔除
-            await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
+                try:
+                    # 刪除該訊息
+                    await message.delete()
+                except discord.NotFound:
+                    pass
+                # 發送一條新訊息通知該成員已遭剔除
+                await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
     # ----- BAN 掉發其他群鏈結的成員(v) -----
 
@@ -132,8 +139,29 @@ async def on_message(message):
 
     if message.channel.id == CHANNEL_ID11:
 
+        user = message.author
+        user_id = user.id
+
+        # 上次改名的时间
+        last_time = last_rename_time.get(user_id)
+
+        if last_time is not None:
+            # 计算距离上次改名的时间间隔
+            current_time = datetime.now()
+            time_diff = current_time - last_time
+
+            # 如果距离上次改名超过一定时间（例如1天），允许使用改名区
+            if time_diff.total_seconds() < 600 :
+                await message.channel.send("最近十分鐘內改過暱稱，請稍候再試 ~")
+                return
+
         # 輸入的文字
         user_input = message.content
+
+        if is_valid_nickname(user_input) == False :
+            re_message = "暱稱包含特殊字符，請重新輸入。"
+            await message.channel.send(re_message)
+            return
 
         # 計算 prefix 和 suffix 的長度
         prefix = "‧˚✮₊"
@@ -154,13 +182,16 @@ async def on_message(message):
         try:
             # 更改暱稱
             await message.author.edit(nick=new_nickname)
-            await message.channel.send(f"已將您的暱稱更改為 {new_nickname}")          
+            await message.channel.send(f"已將您的暱稱更改為 {new_nickname}")    
+            last_rename_time[user_id] = datetime.now()      
             # 從使用者身分組中移除一次性改名卡身分組
             rename_role = discord.utils.get(message.guild.roles, id=id_card)
             if rename_role:
                 await message.author.remove_roles(rename_role)                
         except discord.errors.Forbidden:
-            await message.channel.send("Bot 出現錯誤，請洽模組櫻花。")
+            await message.channel.send("Bot 出現錯誤，請洽櫻花管管")
+        except Exception as e:
+            await message.channel.send("Bot 出現錯誤，請洽櫻花管管")
 
     # ----- 改名區(v) -----
 
@@ -194,7 +225,7 @@ async def on_message(message):
 
     # ----- 布蕾答案書(v) -----
 
-    # ----- 中秋抓訊息(^) -----
+    # ----- 自介抓訊息(^) -----
 
     if message.channel.id == CHANNEL_ID14:
 
@@ -207,15 +238,26 @@ async def on_message(message):
 
         for _ in range(max_retries):
             try:
-                await channel_act00.send(f"{member_link} 感謝您的參與 (❍ᴥ❍ʋ)")
-                await channel_act.send(f"{member_link} ，作品訊息：{message.content}", files=[await f.to_file() for f in message.attachments])
+                await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")
+                await channel_act.send(f"{member_link} \n {message.content}", files=[await f.to_file() for f in message.attachments])
                 await message.delete()
                 break  # 成功後跳出循環
             except Exception as e:
                 await asyncio.sleep(retry_delay)  # 等待一段時間後重試
-
-    # ----- 中秋抓訊息(v) -----
     
+    # ----- 自介抓訊息(v) -----
+    
+def contains_http_or_https(message_content):
+    return 'http' in message_content or 'https' in message_content
+
+def is_valid_nickname(nickname):
+
+    # 检查是否包含特殊字符
+    special_characters = "!@#$%^&*()_+={}[]|\:;'<>,.?/~`"
+    if any(char in special_characters for char in nickname):
+        return False
+
+    return True
 
 # 監聽成員加入事件
 @bot.event
@@ -238,7 +280,14 @@ async def on_member_join(member):
 
     # 設置新成員的暱稱
     new_nickname = prefix + new_member_name + suffix
-    await member.edit(nick=new_nickname)
+    max_retries = 3  # 最大重試次數
+    retry_delay = 5  # 重試之間的延遲（秒）
+    for _ in range(max_retries):
+        try:
+            await member.edit(nick=new_nickname)
+            break  # 成功後跳出循環
+        except Exception as e:
+            await asyncio.sleep(retry_delay)  # 等待一段時間後重試
 
     # 更新架上有幾盤布蕾
     guild = member.guild
@@ -247,8 +296,15 @@ async def on_member_join(member):
     global last_executed_time
     current_time = time.time()
     if current_time - last_executed_time >= 300:
-        await update_channel_name(guild, channel)
-        last_executed_time = current_time
+        max_retries = 3  # 最大重試次數
+        retry_delay = 5  # 重試之間的延遲（秒）
+        for _ in range(max_retries):
+            try:
+                await update_channel_name(guild, channel)
+                last_executed_time = current_time                
+                break  # 成功後跳出循環
+            except Exception as e:
+                await asyncio.sleep(retry_delay)  # 等待一段時間後重試
 
 # 監聽成員離開事件
 @bot.event
@@ -297,8 +353,15 @@ async def on_member_remove(member):
     global last_executed_time
     current_time = time.time()
     if current_time - last_executed_time >= 300:
-        await update_channel_name(guild, channel)
-        last_executed_time = current_time
+        max_retries = 3  # 最大重試次數
+        retry_delay = 5  # 重試之間的延遲（秒）
+        for _ in range(max_retries):
+            try:
+                await update_channel_name(guild, channel)
+                last_executed_time = current_time
+                break  # 成功後跳出循環
+            except Exception as e:
+                await asyncio.sleep(retry_delay)  # 等待一段時間後重試
   
 @bot.event
 async def on_member_ban(guild, user):
@@ -356,7 +419,7 @@ def read_json_file(file_path, encoding='utf-8'):
 keywords = {    
     "greet.json": ["你好", "嗨", "哈囉", "Hello", "Hi", "您好", "早安", "午安", "晚安"],
     "thanks.json": ["謝謝", "感謝", "多謝"],
-    "like.json": ["喜歡布蕾",],
+    "like.json": ["喜歡布蕾","愛布蕾"],
     "hat.json": ["討厭布蕾","不喜歡布蕾"],
     "ask.json": ["請問","嗎","為甚麼","怎麼","可以問個問題嗎", "有事想問"],
 }

@@ -8,7 +8,7 @@ import random
 import asyncio
 import psutil
 from datetime import datetime
-
+from discord import Button, ButtonStyle
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -59,6 +59,10 @@ async def on_message(message):
 
     # 確認訊息不是由機器人自己發送
     if message.author == bot.user:
+        return
+    
+    # 私訊
+    if message.guild is None:
         return
     
     # ----- BAN 掉發其他群鏈結的成員(^) -----
@@ -238,7 +242,8 @@ async def on_message(message):
 
         for _ in range(max_retries):
             try:
-                await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")
+                await message.author.send(f"{member_link} \n### 已經成功發布自介囉 (❍ᴥ❍ʋ)\n￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n> * 聊天等級達到 10 等可看別人的自我介紹！ \n> * 歡迎各位成員邀請親朋好友入群同樂！\n> \n> * DC群連結：https://discord.gg/UHP9UnZXQr")
+                # await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")                
                 await channel_act.send(f"{member_link} \n {message.content}", files=[await f.to_file() for f in message.attachments])
                 await message.delete()
                 break  # 成功後跳出循環

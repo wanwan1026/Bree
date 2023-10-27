@@ -43,6 +43,7 @@ ROLE_ID4 = int(os.getenv("ROLE_ID4"))
 ROLE_ID5 = int(os.getenv("ROLE_ID5")) 
 ROLE_ID6 = int(os.getenv("ROLE_ID6")) 
 ROLE_ID7 = int(os.getenv("ROLE_ID7")) 
+ROLE_ID8 = int(os.getenv("ROLE_ID8")) 
 
 @bot.event
 async def on_ready():
@@ -86,14 +87,25 @@ async def on_message(message):
                             await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}") 
 
                             # 停權該成員
-                            await message.author.ban(reason="散布 Discord 伺服器邀請連結")
+                            role = discord.utils.get(message.guild.roles, id=ROLE_ID8)
+                            if role is not None and role in message.author.roles:
+                                pass
+                            else:
+                                await message.author.ban(reason="散布 Discord 伺服器邀請連結")
                             # 刪除該訊息
                             try:
                                 # 刪除該訊息
                                 await message.delete()
+                                if role is not None and role in message.author.roles:
+                                    await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                                else:
+                                    await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
                             except discord.NotFound:
                                 pass
-                            await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
+                                if role is not None and role in message.author.roles:
+                                    await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                                else:
+                                    await message.channel.send(f"{message.author.global_name} 你不乖乖布蕾要把你吃掉！")
                         else:
                             await message.channel.send(f"{message.author.global_name} 布蕾很開心有你幫忙宣傳！")
                     except discord.errors.NotFound:
@@ -108,15 +120,26 @@ async def on_message(message):
                 await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
                 # 停權該成員
-                await message.author.ban(reason="散布 Line 群組邀請連結")
+                role = discord.utils.get(message.guild.roles, id=ROLE_ID8)
+                if role is not None and role in message.author.roles:
+                    pass
+                else:
+                    await message.author.ban(reason="散布 Line 群組邀請連結")
                 # 刪除該訊息
                 try:
                     # 刪除該訊息
                     await message.delete()
+                    if role is not None and role in message.author.roles:
+                        await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                    else:
+                        await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
                 except discord.NotFound:
                     pass
-                # 發送一條新訊息通知該成員已遭剔除
-                await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
+                    # 發送一條新訊息通知該成員已遭剔除
+                    if role is not None and role in message.author.roles:
+                        await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                    else:
+                        await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
         # 使用正規表達式檢查訊息是否包含 LINE 社群邀請連結
         line_community_pattern = r"https://line.me/ti/g2/"
@@ -127,15 +150,26 @@ async def on_message(message):
                 await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
                 # 停權該成員
-                await message.author.ban(reason="散布 LINE 社群邀請連結")
+                role = discord.utils.get(message.guild.roles, id=ROLE_ID8)
+                if role is not None and role in message.author.roles:
+                    pass
+                else:
+                    await message.author.ban(reason="散布 LINE 社群邀請連結")
                 # 刪除該訊息
                 try:
                     # 刪除該訊息
                     await message.delete()
+                    if role is not None and role in message.author.roles:
+                        await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                    else:
+                        await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
                 except discord.NotFound:
                     pass
-                # 發送一條新訊息通知該成員已遭剔除
-                await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
+                    # 發送一條新訊息通知該成員已遭剔除
+                    if role is not None and role in message.author.roles:
+                        await message.channel.send(f"{message.author.global_name} 請勿傳送違規訊息！")
+                    else:
+                        await message.channel.send(f"{message.author.global_name} 因為不乖乖被布蕾吃掉了！")
 
     # ----- BAN 掉發其他群鏈結的成員(v) -----
 

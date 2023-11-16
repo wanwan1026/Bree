@@ -11,6 +11,7 @@ from datetime import datetime
 from discord import Button, ButtonStyle
 from dotenv import load_dotenv
 import os
+from queue import Queue
 load_dotenv()
 
 intents = discord.Intents.all()
@@ -299,35 +300,40 @@ def is_valid_nickname(nickname):
 
     return True
 
+nickname_queue = Queue()
+queue_lock = asyncio.Lock()
 # 監聽成員加入事件
 @bot.event
 async def on_member_join(member):
 
-    # 取得新成員的名稱和 ID
-    new_member_name = member.global_name
+    try:
+        # 将成员加入队列
+        nickname_queue.put(member)
+        
+        # 如果队列为空，则启动异步任务处理队列中的成员
+        if nickname_queue.qsize() == 1:
+            bot.loop.create_task(process_queue())
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-    if new_member_name is None:
-        # 如果新成員名稱為 None，則使用預設名稱或其他處理方式
-        new_member_name = member.display_name
+    # # 取得新成員的名稱和 ID
+    # new_member_name = member.global_name
 
-    # 計算 prefix 和 suffix 的長度
-    prefix = "‧˚✮₊"
-    suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
-    total_length = len(prefix) + len(suffix)
+    # if new_member_name is None:
+    #     # 如果新成員名稱為 None，則使用預設名稱或其他處理方式
+    #     new_member_name = member.display_name
 
-    # 截斷 new_member_name，確保暱稱長度不超過 32 字元
-    new_member_name = new_member_name[:32 - total_length]
+    # # 計算 prefix 和 suffix 的長度
+    # prefix = "‧˚✮₊"
+    # suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
+    # total_length = len(prefix) + len(suffix)
 
-    # 設置新成員的暱稱
-    new_nickname = prefix + new_member_name + suffix
-    max_retries = 3  # 最大重試次數
-    retry_delay = 5  # 重試之間的延遲（秒）
-    for _ in range(max_retries):
-        try:
-            await member.edit(nick=new_nickname)
-            break  # 成功後跳出循環
-        except Exception as e:
-            await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+    # # 截斷 new_member_name，確保暱稱長度不超過 32 字元
+    # new_member_name = new_member_name[:32 - total_length]
+
+    # # 設置新成員的暱稱
+    # new_nickname = prefix + new_member_name + suffix
+    # await member.edit(nick=new_nickname)
 
     # 更新架上有幾盤布蕾
     guild = member.guild
@@ -345,6 +351,44 @@ async def on_member_join(member):
                 break  # 成功後跳出循環
             except Exception as e:
                 await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+
+async def process_queue():
+    # 使用锁，确保同一时刻只有一个任务在执行
+    async with queue_lock:
+        while not nickname_queue.empty():
+            member = nickname_queue.get()
+            try:
+                # 在这里进行成员更名操作
+                await set_nickname(member)
+                await asyncio.sleep(5)  # 可以根据需要调整延迟时间
+            except discord.HTTPException as e:
+                print(f"An error occurred: {e}")
+            finally:
+                # 处理完一个成员后，从队列中移除
+                nickname_queue.task_done()
+
+        # 等待队列中所有任务完成
+        await nickname_queue.join()
+
+async def set_nickname(member):
+    # 取得新成員的名稱和 ID
+    new_member_name = member.global_name
+
+    if new_member_name is None:
+        # 如果新成員名稱為 None，則使用預設名稱或其他處理方式
+        new_member_name = member.display_name
+
+    # 計算 prefix 和 suffix 的長度
+    prefix = "‧˚✮₊"
+    suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
+    total_length = len(prefix) + len(suffix)
+
+    # 截斷 new_member_name，確保暱稱長度不超過 32 字元
+    new_member_name = new_member_name[:32 - total_length]
+
+    # 設置新成員的暱稱
+    new_nickname = prefix + new_member_name + suffix
+    await member.edit(nick=new_nickname)
 
 # 監聽成員離開事件
 @bot.event

@@ -44,6 +44,7 @@ ROLE_ID5 = int(os.getenv("ROLE_ID5"))
 ROLE_ID6 = int(os.getenv("ROLE_ID6")) 
 ROLE_ID7 = int(os.getenv("ROLE_ID7")) 
 ROLE_ID8 = int(os.getenv("ROLE_ID8")) 
+ROLE_ID9 = int(os.getenv("ROLE_ID9")) 
 
 @bot.event
 async def on_ready():
@@ -367,7 +368,7 @@ async def on_member_remove(member):
     embed.add_field(name='語言', value=locale, inline=False)   
 
     # 要過濾的身分組 ID
-    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7] 
+    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7,ROLE_ID9] 
     # 過濾掉特定身分組
     remaining_roles = [role for role in member.roles if role.id not in filtered_role_ids]
     if remaining_roles:

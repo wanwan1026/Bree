@@ -8,13 +8,13 @@ import random
 import asyncio
 import psutil
 from datetime import datetime
-from discord import Button, ButtonStyle
+
 from dotenv import load_dotenv
 import os
 load_dotenv()
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='!', intents=intents)
+bree = commands.Bot(command_prefix='!', intents=intents)
 
 # 設置您要監聽的頻道 ID
 guild_id = int(os.getenv("guild_id")) #伺服器 ID
@@ -46,21 +46,21 @@ ROLE_ID7 = int(os.getenv("ROLE_ID7"))
 ROLE_ID8 = int(os.getenv("ROLE_ID8")) 
 ROLE_ID9 = int(os.getenv("ROLE_ID9")) 
 
-@bot.event
+@bree.event
 async def on_ready():
-    print('目前登入身份：', bot.user)
+    print('目前登入身份：', bree.user)
     game = discord.Game('布丁布布丁 ! ')
     #discord.Status.<狀態>，可以是online,offline,idle,dnd,invisible
-    await bot.change_presence(status=discord.Status.idle, activity=game)
+    await bree.change_presence(status=discord.Status.idle, activity=game)
 
 # 紀錄最后一次使用改名功能的時間的字典
 last_rename_time = {}
 
-@bot.event
+@bree.event
 async def on_message(message):
 
     # 確認訊息不是由機器人自己發送
-    if message.author == bot.user:
+    if message.author == bree.user:
         return
     
     # 私訊
@@ -81,10 +81,10 @@ async def on_message(message):
                 if "discord.gg" in link:
                     invite_code = link.split('/')[-1]
                     try:
-                        invite = await bot.fetch_invite(invite_code)
+                        invite = await bree.fetch_invite(invite_code)
                         if invite is not None and invite.guild.id != bot_guild_id:
                             
-                            channel_ban = bot.get_channel(CHANNEL_ID13)
+                            channel_ban = bree.get_channel(CHANNEL_ID13)
                             await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}") 
 
                             # 停權該成員
@@ -117,7 +117,7 @@ async def on_message(message):
         if re.search(line_invitation_pattern, message.content):
             if not message.author.guild_permissions.manage_messages:
 
-                channel_ban = bot.get_channel(CHANNEL_ID13)
+                channel_ban = bree.get_channel(CHANNEL_ID13)
                 await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
                 # 停權該成員
@@ -147,7 +147,7 @@ async def on_message(message):
         if re.search(line_community_pattern, message.content):
             if not message.author.guild_permissions.manage_messages:
 
-                channel_ban = bot.get_channel(CHANNEL_ID13)
+                channel_ban = bree.get_channel(CHANNEL_ID13)
                 await channel_ban.send(f"{message.author.global_name} 在頻道：{message.channel}，傳送違法訊息：{message.content}")
 
                 # 停權該成員
@@ -268,8 +268,8 @@ async def on_message(message):
 
     if message.channel.id == CHANNEL_ID14:
 
-        channel_act00 = bot.get_channel(CHANNEL_ID14)
-        channel_act = bot.get_channel(CHANNEL_ID15)
+        channel_act00 = bree.get_channel(CHANNEL_ID14)
+        channel_act = bree.get_channel(CHANNEL_ID15)
         member_link = f"<@!{message.author.id}>"
 
         max_retries = 3  # 最大重試次數
@@ -301,7 +301,7 @@ def is_valid_nickname(nickname):
     return True
 
 # 監聽成員加入事件
-@bot.event
+@bree.event
 async def on_member_join(member):
 
     # 取得新成員的名稱和 ID
@@ -332,7 +332,7 @@ async def on_member_join(member):
 
     # 更新架上有幾盤布蕾
     guild = member.guild
-    channel = bot.get_channel(CHANNEL_ID) 
+    channel = bree.get_channel(CHANNEL_ID) 
     # 執行 update_channel_name 函式，限制每 5 分鐘執行一次
     global last_executed_time
     current_time = time.time()
@@ -348,10 +348,10 @@ async def on_member_join(member):
                 await asyncio.sleep(retry_delay)  # 等待一段時間後重試
 
 # 監聽成員離開事件
-@bot.event
+@bree.event
 async def on_member_remove(member):
 
-    channel = bot.get_channel(CHANNEL_ID2)
+    channel = bree.get_channel(CHANNEL_ID2)
 
     embed = discord.Embed(color=discord.Color(0xFFB6C1))
     avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
@@ -389,7 +389,7 @@ async def on_member_remove(member):
 
     # 更新架上有幾盤布蕾
     guild = member.guild
-    channel = bot.get_channel(CHANNEL_ID) 
+    channel = bree.get_channel(CHANNEL_ID) 
     # 執行 update_channel_name 函式，限制每 5 分鐘執行一次
     global last_executed_time
     current_time = time.time()
@@ -404,11 +404,11 @@ async def on_member_remove(member):
             except Exception as e:
                 await asyncio.sleep(retry_delay)  # 等待一段時間後重試
   
-@bot.event
+@bree.event
 async def on_member_ban(guild, user):
     member = guild.get_member(user.id)
-    target_channel = bot.get_channel(CHANNEL_ID3)    
-    w1_channel = bot.get_channel(CHANNEL_ID4)
+    target_channel = bree.get_channel(CHANNEL_ID3)    
+    w1_channel = bree.get_channel(CHANNEL_ID4)
 
     embed = discord.Embed(color=discord.Color(0xFFB6C1))
     avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
@@ -474,4 +474,4 @@ def classify_dialogue(message):
     return "ask.json"  # 預設為 "ask" 情境
 
 #TOKEN 在剛剛 Discord Developer 那邊「BOT」頁面裡面
-bot.run(os.getenv("BOT_TOKEN2")) #布蕾
+bree.run(os.getenv("BOT_TOKEN2")) #布蕾

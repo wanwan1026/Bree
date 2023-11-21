@@ -10,18 +10,21 @@ print(discord.__version__)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True  
-bot2 = commands.Bot(command_prefix='/', intents=intents)
+putty = commands.Bot(command_prefix='/', intents=intents)
 
-@bot2.event
+@putty.event
 async def on_ready():
     try:
-        synced = await bot2.tree.sync()
+        synced = await putty.tree.sync()
         print(f"Synced {synced} commands")
     except Exception as e:
         print("An error occurred while syncing: ", e)
-    print(f'Logged in as {bot2.user.name}')
+    print('目前登入身份：', putty.user)
+    game = discord.Game('布蕾布布蕾 ! ')
+    #discord.Status.<狀態>，可以是online,offline,idle,dnd,invisible
+    await putty.change_presence(status=discord.Status.idle, activity=game)
 
-@bot2.event
+@putty.event
 async def on_message(message):
     if message.author.bot:
 
@@ -35,7 +38,7 @@ async def on_message(message):
 
         await member.edit(nick=new_nickname)
     
-    await bot2.process_commands(message)
+    await putty.process_commands(message)
 
 def is_valid_nickname(nickname):
 
@@ -51,8 +54,8 @@ def generate_valid_nickname(original_name):
 
     return new_nickname
 
-@bot2.hybrid_command(name='hello', help='Greets the user')  
+@putty.hybrid_command(name='hello', help='Greets the user')  
 async def hello(ctx):
     await ctx.send('你好！')
 
-bot2.run(os.getenv("BOT_TOKEN1"))  # 布丁
+putty.run(os.getenv("BOT_TOKEN1"))  # 布丁

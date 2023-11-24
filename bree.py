@@ -286,6 +286,24 @@ async def on_message(message):
                 await asyncio.sleep(retry_delay)  # 等待一段時間後重試
     
     # ----- 自介抓訊息(v) -----
+
+    # ----- 訊息改名(^) -----
+    
+    if message.author is not None and not message.author.bot and message.guild is not None:
+        member = message.guild.get_member(message.author.id)
+        
+        if member is not None and hasattr(member, 'display_name') and member.display_name is not None:
+            if not is_valid_nickname(member.display_name):
+                new_nickname = generate_valid_nickname(member.display_name)
+                try:
+                    await member.edit(nick=new_nickname)
+                    print(f"已將暱稱更改為 {member.display_name} ")
+                except discord.Forbidden:
+                    print(f"權限錯誤 : 無法更改 {member.display_name} 的暱稱")
+                except Exception as e:
+                    print(f"未知錯誤 : {e}")
+
+    # ----- 訊息改名(v) -----
     
 def contains_http_or_https(message_content):
     return 'http' in message_content or 'https' in message_content
@@ -299,6 +317,20 @@ def is_valid_nickname(nickname):
         return False
 
     return True
+
+def is_valid_nickname(nickname):
+
+    return nickname.startswith("‧˚✮₊") and nickname.endswith("ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃")
+
+def generate_valid_nickname(original_name):
+
+    prefix = "‧˚✮₊"
+    suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
+    total_length = len(prefix) + len(suffix)
+    new_name = original_name[:32 - total_length]
+    new_nickname = prefix + new_name + suffix
+
+    return new_nickname
 
 # 監聽成員加入事件
 @bree.event

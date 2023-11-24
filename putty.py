@@ -30,29 +30,7 @@ async def on_message(message):
 
         return 
     
-    member = message.guild.get_member(message.author.id)
-    
-    if not is_valid_nickname(member.display_name):
-
-        new_nickname = generate_valid_nickname(member.display_name)
-
-        await member.edit(nick=new_nickname)
-    
     await putty.process_commands(message)
-
-def is_valid_nickname(nickname):
-
-    return nickname.startswith("‧˚✮₊") and nickname.endswith("ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃")
-
-def generate_valid_nickname(original_name):
-
-    prefix = "‧˚✮₊"
-    suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
-    total_length = len(prefix) + len(suffix)
-    new_name = original_name[:32 - total_length]
-    new_nickname = prefix + new_name + suffix
-
-    return new_nickname
 
 @putty.hybrid_command(name='hello', help='Greets the user')  
 async def hello(ctx):

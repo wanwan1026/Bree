@@ -297,7 +297,7 @@ async def on_message(message):
                 new_nickname = generate_valid_nickname(member.display_name)
                 try:
                     await member.edit(nick=new_nickname)
-                    print(f"已將暱稱更改為 {member.display_name} ")
+                    # print(f"已將暱稱更改為 {member.display_name} ")
                 except discord.Forbidden:
                     print(f"權限錯誤 : 無法更改 {member.display_name} 的暱稱")
                 except Exception as e:

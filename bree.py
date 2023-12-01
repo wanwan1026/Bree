@@ -197,10 +197,10 @@ async def on_message(message):
         # 輸入的文字
         user_input = message.content
 
-        if is_valid_nickname(user_input) == False :
-            re_message = "暱稱包含特殊字符，請重新輸入。"
-            await message.channel.send(re_message)
-            return
+        # if is_valid_nickname(user_input) == False :
+        #     re_message = "暱稱包含特殊字符，請重新輸入。"
+        #     await message.channel.send(re_message)
+        #     return
 
         # 計算 prefix 和 suffix 的長度
         prefix = "‧˚✮₊"
@@ -272,7 +272,7 @@ async def on_message(message):
         channel_act = bree.get_channel(CHANNEL_ID15)
         member_link = f"<@!{message.author.id}>"
 
-        max_retries = 3  # 最大重試次數
+        max_retries = 5  # 最大重試次數
         retry_delay = 5  # 重試之間的延遲（秒）
 
         for _ in range(max_retries):
@@ -457,7 +457,7 @@ async def on_member_ban(guild, user):
     embed.add_field(name='語言', value=locale, inline=False)   
 
     # 要過濾的身分組 ID
-    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7] 
+    filtered_role_ids = [ROLE_ID1, ROLE_ID2,ROLE_ID3, ROLE_ID4,ROLE_ID5, ROLE_ID6,ROLE_ID7,ROLE_ID9] 
     # 過濾掉特定身分組
     remaining_roles = [role for role in user.roles if role.id not in filtered_role_ids]
     if remaining_roles:

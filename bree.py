@@ -612,7 +612,7 @@ async def clear_member_roles(member):
         role = member.guild.get_role(int(role_id))
         if role and role in member.roles:
             await member.remove_roles(role)
-            print(f'Removed role {role.name} from {member.display_name}')
+            # print(f'Removed role {role.name} from {member.display_name}')
 
 #TOKEN 在剛剛 Discord Developer 那邊「BOT」頁面裡面
 bree.run(os.getenv("BOT_TOKEN2")) #布蕾

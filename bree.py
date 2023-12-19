@@ -360,11 +360,9 @@ def generate_valid_nickname(original_name):
 async def on_member_join(member):
 
     # 取得新成員的名稱和 ID
-    new_member_name = member.global_name
-
-    if new_member_name is None:
-        # 如果新成員名稱為 None，則使用預設名稱或其他處理方式
-        new_member_name = member.display_name
+    new_member_name = member.display_name
+    if member.global_name is not None :
+        new_member_name = member.global_name
 
     # 計算 prefix 和 suffix 的長度
     prefix = "‧˚✮₊"

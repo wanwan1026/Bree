@@ -291,22 +291,24 @@ async def on_message(message):
 
     if message.channel.id == CHANNEL_ID14:
 
-        channel_act00 = bree.get_channel(CHANNEL_ID14)
-        channel_act = bree.get_channel(CHANNEL_ID15)
-        member_link = f"<@!{message.author.id}>"
+        if message.content.startswith('˚୨・──・┈ ・ʚ♡ɞ・┈・──・୧˚'):
 
-        max_retries = 5  # 最大重試次數
-        retry_delay = 5  # 重試之間的延遲（秒）
+            channel_act00 = bree.get_channel(CHANNEL_ID14)
+            channel_act = bree.get_channel(CHANNEL_ID15)
+            member_link = f"<@!{message.author.id}>"
 
-        for _ in range(max_retries):
-            try:
-                await message.author.send(f"{member_link} \n### 已經成功發布自介囉 (❍ᴥ❍ʋ)\n￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n> * 聊天等級 10 等後可以看別人的自我介紹！ \n> * 歡迎各位成員邀請親朋好友入群同樂！\n> \n> * DC群連結：https://discord.gg/UHP9UnZXQr")
-                # await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")                
-                await channel_act.send(f"{member_link} \n {message.content}", files=[await f.to_file() for f in message.attachments])
-                await message.delete()
-                break  # 成功後跳出循環
-            except Exception as e:
-                await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+            max_retries = 5  # 最大重試次數
+            retry_delay = 5  # 重試之間的延遲（秒）
+
+            for _ in range(max_retries):
+                try:
+                    await message.author.send(f"{member_link} \n### 已經成功發布自介囉 (❍ᴥ❍ʋ)\n￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n> * 聊天等級 10 等後可以看別人的自我介紹！ \n> * 歡迎各位成員邀請親朋好友入群同樂！\n> \n> * DC群連結：https://discord.gg/UHP9UnZXQr")
+                    # await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")                
+                    await channel_act.send(f"{member_link} \n {message.content}", files=[await f.to_file() for f in message.attachments])
+                    await message.delete()
+                    break  # 成功後跳出循環
+                except Exception as e:
+                    await asyncio.sleep(retry_delay)  # 等待一段時間後重試
     
     # ----- 自介抓訊息(v) -----
 
@@ -360,6 +362,7 @@ def generate_valid_nickname(original_name):
 async def on_member_join(member):
 
     # 取得新成員的名稱和 ID
+
     new_member_name = member.global_name
 
     if new_member_name is None:

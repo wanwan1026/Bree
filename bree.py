@@ -309,6 +309,11 @@ async def on_message(message):
                     break  # 成功後跳出循環
                 except Exception as e:
                     await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+        else:
+            await message.delete()
+            user = message.author
+            await user.send(f"請複製以下發文格式才可以順利發布自介喔！\n另外此頻道是用來發布自介並非閒聊，請注意使用方式！\n發布自介頻道傳送門：https://discord.com/channels/1071783924998623253/1161678416534319225\n────────只是分隔線────────")
+            await user.send("˚୨・──・┈ ・ʚ♡ɞ・┈・──・୧˚\n╭˚₊ʚ暱稱ଓ・\n┊˚₊ʚ生日ଓ・\n┊˚₊ʚ年齡ଓ・\n┊˚₊ʚ性別ଓ・\n┊˚₊ʚ來自ଓ・\n┊˚₊ʚ星座ଓ・\n┊˚₊ʚ身高ଓ・\n┊˚₊ʚ感情ଓ・\n┊˚₊ʚ專長ଓ・\n┊˚₊ʚ興趣ଓ・\n┊˚₊ʚ遊戲ଓ・\n┊˚₊ʚ時段ଓ・\n┊˚₊ʚ加友ଓ・\n╰˚₊ʚ私訊ଓ・\n\nTo.落櫻紛飛的一句話或在哪裡發現我們的：")
     
     # ----- 自介抓訊息(v) -----
 

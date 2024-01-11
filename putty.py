@@ -53,7 +53,7 @@ async def on_message(message):
         else:
             await message.delete()
             user = message.author
-            await user.send(f"請複製以下發文格式才可以順利開啟揪團喔！\n另外此頻道是用來揪團並非閒聊，請注意使用方式！\n揪團頻道傳送門：https://discord.com/channels/1071783924998623253/1169289511788892190")
+            await user.send(f"請複製以下發文格式才可以順利開啟揪團喔！\n另外此頻道是用來揪團並非閒聊，請注意使用方式！\n揪團頻道傳送門：https://discord.com/channels/1071783924998623253/1169289511788892190\n────────只是分隔線────────")
             await user.send("╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n꒰1๑ 項目：\nৎ2୭ 時間：\n꒰3๑ 人數：\nৎ4୭ 備註：\n꒰5๑ 語音房連結：\n╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦")
         
     await putty.process_commands(message)

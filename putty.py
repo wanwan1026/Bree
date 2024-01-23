@@ -20,6 +20,8 @@ ROLE_ID12 = int(os.getenv("ROLE_ID12")) # 金
 ROLE_ID13 = int(os.getenv("ROLE_ID13")) # 一次改名
 ROLE_ID14 = int(os.getenv("ROLE_ID14")) # 一次改名
 CHANNEL_ID18 = int(os.getenv("CHANNEL_ID18")) # 集合囉!小櫻花
+CHANNEL_ID20 = int(os.getenv("CHANNEL_ID20")) # 時光膠囊寄送
+CHANNEL_ID21 = int(os.getenv("CHANNEL_ID21")) # 時光膠囊回收
 
 @putty.event
 async def on_ready():
@@ -40,10 +42,35 @@ async def on_message(message):
 
         return 
     
+    # ----- 時光抓訊息(^) -----
+
+    if message.channel.id == CHANNEL_ID20:
+
+        channel_act00 = putty.get_channel(CHANNEL_ID20)
+        channel_act = putty.get_channel(CHANNEL_ID21)
+        member_link = f"<@!{message.author.id}>"
+        max_retries = 3  # 最大重試次數
+        retry_delay = 5  # 重試之間的延遲（秒）
+
+        for _ in range(max_retries):
+            try:
+                if message.content.startswith("<:No_011:1133635937855881367> 致 2025 的我："):
+                    await channel_act00.send(f"{member_link} 感謝您的參與*ଘ(੭*ˊᗜˋ)੭* ੈ✧‧₊˚")
+                    await channel_act.send(f"{member_link} 的時光訊息：\n{message.content}", files=[await f.to_file() for f in message.attachments])
+                else:
+                   await channel_act00.send(f"{member_link}\n請依照指定開頭發布唷ヽ( ^ω^ ゞ )\n指定開頭如下\n────────只是分隔線────────")
+                   await channel_act00.send("<:No_011:1133635937855881367> 致 2025 的我：")
+                await message.delete()
+                break  # 成功後跳出循環
+            except Exception as e:
+                await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+
+    # ----- 時光抓訊息(v) -----
+    
     if message.channel.id == CHANNEL_ID18:
         # 確保訊息不是由機器人發送且在指定頻道
         role_mention = f"<@&{ROLE_ID14}>"
-        if message.content.startswith('⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝'):
+        if message.content.startswith('╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝'):
             # 開啟討論串
             member_nick = message.author.nick or message.author.display_name
             thread = await message.create_thread(name=f"{member_nick}")

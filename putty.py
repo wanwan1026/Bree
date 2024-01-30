@@ -35,6 +35,34 @@ async def on_ready():
     #discord.Status.<狀態>，可以是online,offline,idle,dnd,invisible
     await putty.change_presence(status=discord.Status.idle, activity=game)
 
+@putty.event
+async def on_voice_state_update(member, before, after):
+    if before.channel is None and after.channel is not None:
+
+        if member is not None and hasattr(member, 'display_name') and member.display_name is not None:
+            if not is_valid_nickname(member.display_name):
+                new_nickname = generate_valid_nickname(member.display_name)
+                try:
+                    await member.edit(nick=new_nickname)
+                    # print(f"已將暱稱更改為 {member.display_name} ")
+                except discord.Forbidden:
+                    print(f"權限錯誤 : 無法更改 {member.display_name} 的暱稱")
+                except Exception as e:
+                    print(f"未知錯誤 : {e}")
+
+def is_valid_nickname(nickname):
+
+    return nickname.startswith("‧˚✮₊") and nickname.endswith("ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃")
+
+def generate_valid_nickname(original_name):
+
+    prefix = "‧˚✮₊"
+    suffix = "ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃"
+    total_length = len(prefix) + len(suffix)
+    new_name = original_name[:32 - total_length]
+    new_nickname = prefix + new_name + suffix
+
+    return new_nickname
 
 @putty.event
 async def on_message(message):

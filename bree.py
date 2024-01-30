@@ -340,16 +340,6 @@ def contains_http_or_https(message_content):
 
 def is_valid_nickname(nickname):
 
-    # 检查是否包含特殊字符
-    special_characters = "!@#$%^&*()_+={}[]|\:;'<>,.?/~`"
-    special_characters = special_characters.replace(".", "")
-    if any(char in special_characters for char in nickname):
-        return False
-
-    return True
-
-def is_valid_nickname(nickname):
-
     return nickname.startswith("‧˚✮₊") and nickname.endswith("ʕ̯•͡˔•̯᷅ʔ彡⁼³₌₃")
 
 def generate_valid_nickname(original_name):

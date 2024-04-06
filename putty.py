@@ -117,4 +117,60 @@ async def on_message(message):
 async def hello(ctx):
     await ctx.send('你好！')
 
+@putty.hybrid_command(name='vip_add_member', help='將指定成員加入 vip 語音房 !')
+async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Member = None):
+    if not channel:
+        await ctx.send("未填入 channel ！")
+        return
+
+    if not member:
+        await ctx.send("未填入 member ！")
+        return
+    
+    if member:
+        if channel:
+            channel_id = channel.id
+            voice_channel = putty.get_channel(channel_id)
+            if ctx.author.voice and ctx.author.voice.channel:
+                permissions = channel.permissions_for(ctx.author)
+                if permissions.priority_speaker:
+                    await voice_channel.set_permissions(member, view_channel=True)
+                    await ctx.send(f"{member.mention} 已加入 {voice_channel.name} VIP 語音房")
+                else:
+                    await ctx.send("您並未擁有該語音房權限！")
+            else:
+                await ctx.send("您並未擁有該語音房權限！")
+        else:
+            await ctx.send("布丁看不懂 ！")
+    else:
+        await ctx.send("布丁看不懂 ！")
+
+@putty.hybrid_command(name='vip_remove_member', help='將指定成員移出 vip 語音房 !')
+async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Member = None): 
+    if not channel:
+        await ctx.send("未填入 channel ！")
+        return
+
+    if not member:
+        await ctx.send("未填入 member ！")
+        return
+    
+    if member:
+        if channel:
+            channel_id = channel.id
+            voice_channel = putty.get_channel(channel_id)
+            if ctx.author.voice and ctx.author.voice.channel:
+                permissions = channel.permissions_for(ctx.author)
+                if permissions.priority_speaker:
+                    await voice_channel.set_permissions(member, view_channel=False)
+                    await ctx.send(f"{member.mention} 已移出 {voice_channel.name} VIP 語音房")
+                else:
+                    await ctx.send("您並未擁有該語音房權限！")
+            else:
+                await ctx.send("您並未擁有該語音房權限！")
+        else:
+            await ctx.send("布丁看不懂 ！")
+    else:
+        await ctx.send("布丁看不懂 ！")
+
 putty.run(os.getenv("BOT_TOKEN1"))  # 布丁

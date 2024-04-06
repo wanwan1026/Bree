@@ -131,15 +131,12 @@ async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Memb
         if channel:
             channel_id = channel.id
             voice_channel = putty.get_channel(channel_id)
-            if ctx.author.voice and ctx.author.voice.channel:
-                permissions = channel.permissions_for(ctx.author)
-                if permissions.priority_speaker:
-                    await voice_channel.set_permissions(member, view_channel=True)
-                    await ctx.send(f"{member.mention} 已加入 {voice_channel.name} VIP 語音房")
-                else:
-                    await ctx.send("您並未擁有該語音房權限！")
+            permissions = channel.permissions_for(ctx.author)
+            if permissions.priority_speaker:
+                await voice_channel.set_permissions(member, view_channel=True)
+                await ctx.send(f"{member.mention} 已加入 {voice_channel.name} VIP 語音房")
             else:
-                await ctx.send("您並未擁有該語音房權限！")
+                await ctx.send("您並未擁有該語音房權限1！")
         else:
             await ctx.send("布丁看不懂 ！")
     else:
@@ -159,13 +156,10 @@ async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Memb
         if channel:
             channel_id = channel.id
             voice_channel = putty.get_channel(channel_id)
-            if ctx.author.voice and ctx.author.voice.channel:
-                permissions = channel.permissions_for(ctx.author)
-                if permissions.priority_speaker:
-                    await voice_channel.set_permissions(member, view_channel=False)
-                    await ctx.send(f"{member.mention} 已移出 {voice_channel.name} VIP 語音房")
-                else:
-                    await ctx.send("您並未擁有該語音房權限！")
+            permissions = channel.permissions_for(ctx.author)
+            if permissions.priority_speaker:
+                await voice_channel.set_permissions(member, view_channel=False)
+                await ctx.send(f"{member.mention} 已移出 {voice_channel.name} VIP 語音房")
             else:
                 await ctx.send("您並未擁有該語音房權限！")
         else:

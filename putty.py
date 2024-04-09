@@ -181,7 +181,7 @@ async def list_viewers(ctx, channel: discord.VoiceChannel = None):
                 viewers.append(overwrite)
 
     if viewers:
-        embed = discord.Embed(title=f'具有檢視權限的成員列表 ({len(viewers)}人)', color=discord.Color.pink())
+        embed = discord.Embed(title=f'具有檢視權限的成員列表 ({len(viewers)}人)', color=discord.Color.from_rgb(241, 174, 194))
         for member in viewers:
             embed.add_field(name=member.display_name, value=member.mention, inline=False)
 

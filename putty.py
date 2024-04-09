@@ -167,4 +167,26 @@ async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Memb
     else:
         await ctx.send("布丁看不懂 ！")
 
+@putty.hybrid_command(name='vip_view', help='列出指定語音頻道的檢視權限成員')
+async def list_viewers(ctx, channel: discord.VoiceChannel = None):
+    if not channel:
+        await ctx.send('布丁找不到這個語音頻道！')
+        return
+
+    viewers = []
+    for overwrite in channel.overwrites:
+        if isinstance(overwrite, discord.Member):
+            permissions = channel.permissions_for(overwrite)
+            if permissions.view_channel:
+                viewers.append(overwrite)
+
+    if viewers:
+        embed = discord.Embed(title=f'具有檢視權限的成員列表 ({len(viewers)}人)', color=discord.Color.pink())
+        for member in viewers:
+            embed.add_field(name=member.display_name, value=member.mention, inline=False)
+
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send('沒有任何成員具有該語音頻道的檢視權限！')
+
 putty.run(os.getenv("BOT_TOKEN1"))  # 布丁

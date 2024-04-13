@@ -234,7 +234,7 @@ async def hang_out(ctx,  *, flags: hang_out_Flags):
         f"ৎ2୭ 時間(time)：{時間}\n"
         f"꒰3๑ 人數(People)：{人數}\n"
         f"ৎ4୭ 備註(Remark)：{備註}\n"
-        f"꒰5๑ 語音房連結(channel)：{頻道.mention}\n"
+        f"꒰5๑ 語音房連結(channel)：https://discord.com/channels/{ctx.guild.id}/{頻道.id}\n"
         "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦"
     )
 

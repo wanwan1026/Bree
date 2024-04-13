@@ -212,14 +212,16 @@ async def hang_out(ctx,  *, flags: hang_out_Flags):
 
     message_content = (
         f"{role_mention}\n"
-        f"{ctx.author.mention} 開啟新的揪團囉！\n"
+        f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
+        f"主揪：{ctx.author.mention}\n"
         "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
-        f"꒰1๑ 項目(item)：{項目}\n"
-        f"ৎ2୭ 時間(time)：{時間}\n"
-        f"꒰3๑ 人數(People)：{人數}\n"
-        f"ৎ4୭ 備註(Remark)：{備註}\n"
-        f"꒰5๑ 語音房連結(channel)：https://discord.com/channels/{ctx.guild.id}/{頻道.id}\n"
-        "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦"
+        f"<:No_001:1133419740166115359>項目(Item)：{項目}\n"
+        f"<:No_002:1133419757215953039>時間(Time)：{時間}\n"
+        f"<:No_003:1133419774500671518>人數(People)：{人數}\n"
+        f"<:No_004:1133419788014731325>備註(Remark)：{備註}\n"
+        f"<:No_005:1133419804255076525>語音房連結(channel)：\n"
+        f"<:No_011:1167260028315639889> https://discord.com/channels/{ctx.guild.id}/{頻道.id}\n"
+        "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
     )
 
     message = await ctx.send(message_content)

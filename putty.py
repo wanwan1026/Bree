@@ -117,8 +117,15 @@ async def on_message(message):
 async def hello(ctx):
     await ctx.send('你好！')
 
-@putty.hybrid_command(name='vip_add_member', help='將指定成員加入 vip 語音房 !')
-async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Member = None):
+class vip_add_member_Flags(commands.FlagConverter):
+    頻道: discord.VoiceChannel = commands.flag(description='選擇語音房')
+    成員: discord.Member = commands.flag(description='選擇成員')
+@putty.hybrid_command(name='增加vip房成員', help='將指定成員加入 vip 語音房 !')
+async def vip_add_member(ctx,  *, flags: vip_add_member_Flags):
+
+    channel = flags.頻道
+    member = flags.成員
+
     if not channel:
         await ctx.send("未填入 channel ！")
         return
@@ -136,14 +143,22 @@ async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Memb
                 await voice_channel.set_permissions(member, view_channel=True)
                 await ctx.send(f"{member.mention} 已加入 {voice_channel.name} VIP 語音房")
             else:
-                await ctx.send("您並未擁有該語音房權限1！")
+                await ctx.send("您並未擁有該語音房權限！")
         else:
             await ctx.send("布丁看不懂 ！")
     else:
         await ctx.send("布丁看不懂 ！")
 
-@putty.hybrid_command(name='vip_remove_member', help='將指定成員移出 vip 語音房 !')
-async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Member = None): 
+class vip_remove_member_Flags(commands.FlagConverter):
+    頻道: discord.VoiceChannel = commands.flag(description='選擇語音房')
+    成員: discord.Member = commands.flag(description='選擇成員')
+@putty.hybrid_command(name='移除vip房成員', help='將指定成員移出 vip 語音房 !')
+async def vip_remove_member(ctx,  *, flags: vip_remove_member_Flags): 
+
+    channel = flags.頻道
+    member = flags.成員
+
+
     if not channel:
         await ctx.send("未填入 channel ！")
         return
@@ -167,8 +182,13 @@ async def addvip(ctx, channel: discord.VoiceChannel = None, member: discord.Memb
     else:
         await ctx.send("布丁看不懂 ！")
 
-@putty.hybrid_command(name='vip_view', help='列出指定語音頻道的檢視權限成員')
-async def list_viewers(ctx, channel: discord.VoiceChannel = None):
+class vip_view_Flags(commands.FlagConverter):
+    頻道: discord.VoiceChannel = commands.flag(description='選擇語音房')
+@putty.hybrid_command(name='檢視vip房成員列表', help='列出指定語音頻道的成員列表')
+async def vip_view(ctx,  *, flags: vip_view_Flags):
+
+    channel = flags.頻道
+
     if not channel:
         await ctx.send('布丁找不到這個語音頻道！')
         return
@@ -188,5 +208,39 @@ async def list_viewers(ctx, channel: discord.VoiceChannel = None):
         await ctx.send(embed=embed)
     else:
         await ctx.send('沒有任何成員具有該語音頻道的檢視權限！')
+
+class hang_out_Flags(commands.FlagConverter):
+    項目: str = commands.flag(description='主題內容(Game name)')
+    時間: str = commands.flag(description='開始時間(Starting time)')
+    人數: str = commands.flag(description='需求人數(People needed)')
+    備註: str = commands.flag(description='備註(Remark)')
+    頻道: discord.VoiceChannel = commands.flag(description='選擇語音房(Voice channel)')   
+@putty.hybrid_command(name='揪團', help="找人一起玩遊戲或聊天或看影片(Let's hang out together and play games.)")
+async def hang_out(ctx,  *, flags: hang_out_Flags):
+
+    項目 = flags.項目
+    時間 = flags.時間
+    人數 = flags.人數
+    備註 = flags.備註
+    頻道 = flags.頻道
+
+    role_mention = f"<@&{ROLE_ID14}>"
+
+    message_content = (
+        f"{role_mention}\n"
+        f"{ctx.author.mention} 開啟新的揪團囉！\n"
+        "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
+        f"꒰1๑ 項目(item)：{項目}\n"
+        f"ৎ2୭ 時間(time)：{時間}\n"
+        f"꒰3๑ 人數(People)：{人數}\n"
+        f"ৎ4୭ 備註(Remark)：{備註}\n"
+        f"꒰5๑ 語音房連結(channel)：{頻道.mention}\n"
+        "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦"
+    )
+
+    message = await ctx.send(message_content)
+    member_nick = ctx.author.nick or ctx.author.display_name
+    thread = await message.create_thread(name=f"{member_nick}")
+    await thread.send("布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得講一聲喔")
 
 putty.run(os.getenv("BOT_TOKEN1"))  # 布丁

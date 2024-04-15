@@ -211,7 +211,6 @@ async def hang_out(ctx,  *, flags: hang_out_Flags):
     role_mention = f"<@&{ROLE_ID14}>"
 
     message_content = (
-        f"{role_mention}\n"
         f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
         f"主揪：{ctx.author.mention}\n"
         "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
@@ -223,6 +222,9 @@ async def hang_out(ctx,  *, flags: hang_out_Flags):
         f"<:No_011:1167260028315639889> https://discord.com/channels/{ctx.guild.id}/{頻道.id}\n"
         "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
     )
+
+    channel2 = ctx.channel
+    await channel2.send(f"{role_mention}")
 
     message = await ctx.send(message_content)
     member_nick = ctx.author.nick or ctx.author.display_name

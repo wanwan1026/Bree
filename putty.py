@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import json
 import asyncio
+import random
 
 load_dotenv()
 
@@ -230,5 +231,54 @@ async def hang_out(ctx,  *, flags: hang_out_Flags):
     member_nick = ctx.author.nick or ctx.author.display_name
     thread = await message.create_thread(name=f"{member_nick}")
     await thread.send("布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得講一聲喔")
+
+class draw_Flags(commands.FlagConverter):
+    活動主題: str = commands.flag(description='抽取的主題內容') 
+    身分組: commands.Greedy[discord.Role] = commands.flag(description='要抽取的身分組')
+    數量: int = commands.flag(description='要抽取幾位得獎者') 
+    獎項內容: str = commands.flag(description='抽取的獎項內容') 
+@putty.hybrid_command(name='隨機抽獎', help="從指定身分組抽出得獎者")
+async def draw(ctx,  *, flags: draw_Flags):
+    活動主題 = flags.活動主題
+    身分組 = flags.身分組
+    數量 = flags.數量
+    獎項內容 = flags.獎項內容
+    
+    # 檢查參數是否有效
+    if 數量 <= 0:
+        await ctx.send("抽獎人數必須是正整數！")
+        return
+
+    # 獲取所有被提及的身分組成員，並去重
+    all_members = set()
+    for role in 身分組:
+        all_members.update(role.members)
+
+    # 從所有被提及的身分組成員中隨機選擇指定數量的成員作為中獎者
+    winners = random.sample(all_members, min(len(all_members), 數量))
+
+    # 在頻道中發送抽獎結果
+    winner_names = "\n".join([member.mention for member in winners])
+
+    # 創建 Embed 來顯示抽獎清單
+    embed = discord.Embed(title="抽獎清單", color=discord.Color.blue())
+
+    # 添加所有參加抽獎的成員到 Embed
+    member_list = ", ".join([member.mention for member in all_members])
+    embed.add_field(name="成員", value=member_list, inline=False)
+
+    # 發送 Embed 到頻道中
+    await ctx.send(embed=embed)
+    message_content = (
+        "## ε✦°·得獎公告·°✦з\n"
+        "︶꒷︶︶୨୧︶︶꒷𓈊꒷︶︶୨୧︶︶꒷︶\n"
+        "### 恭喜 🎉🎉🎉\n"
+        f"{winner_names}\n"
+        f"### 參與 {活動主題}\n" 
+        f"### 幸運獲得了 {獎項內容}！\n"
+        f"\n"
+        "︶꒷︶︶୨୧︶︶꒷︶꒷︶︶୨୧︶︶꒷︶\n"
+    )
+    await ctx.send(message_content)
 
 putty.run(os.getenv("BOT_TOKEN1"))  # 布丁

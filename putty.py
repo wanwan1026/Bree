@@ -261,7 +261,7 @@ async def draw(ctx,  *, flags: draw_Flags):
     winner_names = "\n".join([member.mention for member in winners])
 
     # 創建 Embed 來顯示抽獎清單
-    embed = discord.Embed(title="抽獎清單", color=discord.Color.blue())
+    embed = discord.Embed(title="抽獎清單", color=discord.Color.from_rgb(241, 174, 194))
 
     # 添加所有參加抽獎的成員到 Embed
     member_list = ", ".join([member.mention for member in all_members])

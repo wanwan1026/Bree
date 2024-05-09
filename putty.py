@@ -237,6 +237,7 @@ class draw_Flags(commands.FlagConverter):
     身分組: commands.Greedy[discord.Role] = commands.flag(description='要抽取的身分組')
     數量: int = commands.flag(description='要抽取幾位得獎者') 
     獎項內容: str = commands.flag(description='抽取的獎項內容') 
+
 @putty.hybrid_command(name='隨機抽獎', help="從指定身分組抽出得獎者")
 async def draw(ctx,  *, flags: draw_Flags):
     活動主題 = flags.活動主題
@@ -255,7 +256,7 @@ async def draw(ctx,  *, flags: draw_Flags):
         all_members.update(role.members)
 
     # 從所有被提及的身分組成員中隨機選擇指定數量的成員作為中獎者
-    winners = random.sample(all_members, min(len(all_members), 數量))
+    winners = random.sample(list(all_members), min(len(all_members), 數量))
 
     # 在頻道中發送抽獎結果
     winner_names = "\n".join([member.mention for member in winners])

@@ -237,6 +237,7 @@ class draw_Flags(commands.FlagConverter):
     身分組: commands.Greedy[discord.Role] = commands.flag(description='要抽取的身分組')
     數量: int = commands.flag(description='要抽取幾位得獎者') 
     獎項內容: str = commands.flag(description='抽取的獎項內容') 
+    限制身分組: commands.Greedy[discord.Role] = commands.flag(description='得獎人必須擁有的身分組', default=[])
 
 @putty.hybrid_command(name='隨機抽獎', help="從指定身分組抽出得獎者")
 async def draw(ctx,  *, flags: draw_Flags):
@@ -244,16 +245,28 @@ async def draw(ctx,  *, flags: draw_Flags):
     身分組 = flags.身分組
     數量 = flags.數量
     獎項內容 = flags.獎項內容
+    限制身分組 = flags.限制身分組
     
     # 檢查參數是否有效
     if 數量 <= 0:
         await ctx.send("抽獎人數必須是正整數！")
         return
 
-    # 獲取所有被提及的身分組成員，並去重
+    # 獲取所有被提及的身分組成員，並去除重複
     all_members = set()
     for role in 身分組:
         all_members.update(role.members)
+
+    # 如果指定了限制身分組，則進行過濾
+    if 限制身分組:
+        filtered_members = [
+            member for member in all_members 
+            if any(role in member.roles for role in 限制身分組)
+        ]
+        all_members = filtered_members
+    else:
+        filtered_members = list(all_members)
+        all_members = filtered_members
 
     # 從所有被提及的身分組成員中隨機選擇指定數量的成員作為中獎者
     winners = random.sample(list(all_members), min(len(all_members), 數量))

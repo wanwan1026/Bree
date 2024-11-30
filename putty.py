@@ -83,12 +83,12 @@ async def on_message(message):
 
         for _ in range(max_retries):
             try:
-                if message.content.startswith("<:No_011:1133635937855881367> 致 2025 的我："):
+                #if message.content.startswith("<:No_011:1133635937855881367> 致 2025 的我："):
+                if len(message.content) <= 1900:
                     await channel_act00.send(f"{member_link} 感謝您的參與*ଘ(੭*ˊᗜˋ)੭* ੈ✧‧₊˚")
-                    await channel_act.send(f"{member_link} 的時光訊息：\n{message.content}", files=[await f.to_file() for f in message.attachments])
+                    await channel_act.send(f"︶꒷︶︶୨୧︶︶꒷𓈊꒷︶︶୨୧︶︶꒷︶\n{member_link}\n留下的時光訊息：\n\n{message.content}\n\n︶꒷︶︶୨୧︶︶꒷︶꒷︶︶୨୧︶︶꒷︶", files=[await f.to_file() for f in message.attachments])
                 else:
-                   await channel_act00.send(f"{member_link}\n請依照指定開頭發布唷ヽ( ^ω^ ゞ )\n指定開頭如下\n────────只是分隔線────────")
-                   await channel_act00.send("<:No_011:1133635937855881367> 致 2025 的我：")
+                    await channel_act00.send("字數不可以超過 1900 字唷")
                 await message.delete()
                 break  # 成功後跳出循環
             except Exception as e:

@@ -73,10 +73,10 @@ async def on_message(message):
     
     # ----- 時光抓訊息(^) -----
 
-    if message.channel.id == CHANNEL_ID20:
+    if message.channel.id == 1312609405350576240:
 
-        channel_act00 = putty.get_channel(CHANNEL_ID20)
-        channel_act = putty.get_channel(CHANNEL_ID21)
+        channel_act00 = putty.get_channel(1312609405350576240) #post channel
+        channel_act = putty.get_channel(1312610532032909435) # recard channel
         member_link = f"<@!{message.author.id}>"
         max_retries = 3  # 最大重試次數
         retry_delay = 5  # 重試之間的延遲（秒）

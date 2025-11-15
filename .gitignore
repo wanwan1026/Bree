@@ -2,3 +2,5 @@
 sec.py
 吉吉
 yugr.py
+__pycache__/
+*.pyc

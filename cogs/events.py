@@ -9,6 +9,13 @@ from config import (
     TAG_GUILD_ID,
     TAG_ROLE_ID,
     TAG_STRING,
+    ROLE_ID16,
+    ROLE_ID17,
+    ROLE_ID18,
+    ROLE_ID19,
+    ROLE_ID20,
+    ROLE_ID21,
+    ROLE_ID22,
 )
 
 
@@ -65,6 +72,7 @@ class Events(commands.Cog):
         # 啟動背景 task（會先跑 before_loop → 等 bot.ready）
         self.process_grant_queue.start()
         self.check_role_members.start()
+        self.check_role_dependencies.start()
 
     # ========= on_ready =========
     @commands.Cog.listener()
@@ -211,48 +219,147 @@ class Events(commands.Cog):
     # ==============================
     @tasks.loop(minutes=30)
     async def check_role_members(self):
-        guild = self.bot.get_guild(TAG_GUILD_ID)
-        if guild is None:
-            return
+        try:
+            guild = self.bot.get_guild(TAG_GUILD_ID)
+            if guild is None:
+                print("[check_role_members] 找不到 guild，直接跳出本輪")
+                return
 
-        role = guild.get_role(TAG_ROLE_ID)
-        if role is None:
-            return
+            role = guild.get_role(TAG_ROLE_ID)
+            if role is None:
+                print("[check_role_members] 找不到角色，直接跳出本輪")
+                return
 
-        print("開始檢查：擁有身分組的成員是否仍然使用伺服器 TAG")
+            print("開始檢查：擁有身分組的成員是否仍然使用伺服器 TAG")
 
-        # 防爆版：每處理一定數量就 sleep 一下，避免一次打太多 API
-        BATCH_SIZE = 20
-        removed_count = 0
+            BATCH_SIZE = 20
+            removed_count = 0
 
-        for idx, member in enumerate(list(role.members), start=1):
-            if member.bot:
-                continue
+            for idx, member in enumerate(list(role.members), start=1):
+                if member.bot:
+                    continue
 
-            still_has_tag = member_has_server_tag(member)
+                still_has_tag = member_has_server_tag(member)
 
-            # 🔍 偵錯輸出（如果覺得太吵可以之後註解掉）
-            pg = getattr(member, "primary_guild", None)
-            pg_id = getattr(pg, "id", None)
-            pg_tag = getattr(pg, "tag", None)
-            print(
-                f"[TAG檢查] {member} | primary_guild.id={pg_id} | "
-                f"primary_guild.tag={pg_tag} | 判定 still_has_tag={still_has_tag}"
-            )
+                pg = getattr(member, "primary_guild", None)
+                pg_id = getattr(pg, "id", None)
+                pg_tag = getattr(pg, "tag", None)
+                print(
+                    f"[TAG檢查] {member} | primary_guild.id={pg_id} | "
+                    f"primary_guild.tag={pg_tag} | 判定 still_has_tag={still_has_tag}"
+                )
 
-            if not still_has_tag:
-                try:
-                    await member.remove_roles(role, reason="未使用伺服器 TAG → 自動收回")
-                    removed_count += 1
-                    print(f"[自動收回] {member}")
-                except discord.HTTPException as e:
-                    print(f"收回 {member} 失敗：{e}")
+                if not still_has_tag:
+                    try:
+                        await member.remove_roles(role, reason="未使用伺服器 TAG → 自動收回")
+                        removed_count += 1
+                        print(f"[自動收回] {member}")
+                    except discord.HTTPException as e:
+                        print(f"收回 {member} 失敗：{e}")
 
-            # 每處理 BATCH_SIZE 個成員，就休息 1 秒，溫柔防止 rate limit
-            if idx % BATCH_SIZE == 0:
-                await asyncio.sleep(1)
+                if idx % BATCH_SIZE == 0:
+                    await asyncio.sleep(1)
 
-        print(f"檢查完成，本輪共收回 {removed_count} 人的身分組\n")
+            print(f"檢查完成，本輪共收回 {removed_count} 人的身分組\n")
+
+        except Exception as e:
+            # ⚠️ 這個一定要有，這樣 loop 出錯不會直接死掉
+            import traceback
+
+            print("[check_role_members] 迴圈內發生未捕捉錯誤，已攔截避免 loop 停止")
+            traceback.print_exception(type(e), e, e.__traceback__)
+
+    # ==============================
+    # 定期檢查：身分組依賴關係
+    # 16~20 這幾個只要缺 21 或 22，就全部拔掉
+    # ==============================
+    @tasks.loop(minutes=30)
+    async def check_role_dependencies(self):
+        try:
+            guild = self.bot.get_guild(TAG_GUILD_ID)
+            if guild is None:
+                print("[check_role_dependencies] 找不到 guild，直接跳出本輪")
+                return
+
+            # 主要身分組（任一個就算）
+            main_role_ids = [ROLE_ID16, ROLE_ID17, ROLE_ID18, ROLE_ID19, ROLE_ID20]
+            required_role_ids = [ROLE_ID21, ROLE_ID22]
+
+            main_roles = [guild.get_role(rid) for rid in main_role_ids]
+            required_roles = [guild.get_role(rid) for rid in required_role_ids]
+
+            # 過濾掉 None（避免哪個角色被刪掉）
+            main_roles = [r for r in main_roles if r is not None]
+            required_roles = [r for r in required_roles if r is not None]
+
+            if not main_roles:
+                print("[check_role_dependencies] 找不到任何 main 角色，直接跳出本輪")
+                return
+            if len(required_roles) < 2:
+                print("[check_role_dependencies] 必要角色少於 2 個（21 / 22），請檢查設定")
+                # 你也可以選擇 return
+                # return
+
+            print("開始檢查：身分組依賴 (16~20 需要同時擁有 21 & 22)")
+
+            BATCH_SIZE = 50
+            idx = 0
+            cleaned_members = 0
+
+            # ✅ 只檢查「有 16~20 的成員」
+            members_to_check: set[discord.Member] = set()
+            for r in main_roles:
+                members_to_check.update(r.members)
+
+            for member in list(members_to_check):
+                if member.bot:
+                    continue
+
+                # 理論上這裡一定是 True，但保險再判一次
+                has_main = any(r in member.roles for r in main_roles)
+                if not has_main:
+                    continue
+
+                # 是否同時擁有 21 & 22
+                has_all_required = all(r in member.roles for r in required_roles)
+
+                print(
+                    f"[依賴檢查] {member} | has_main={has_main} | "
+                    f"has_all_required={has_all_required}"
+                )
+
+                # 只要缺 21 或 22 就拔掉 16~20
+                if not has_all_required:
+                    roles_to_remove = [r for r in main_roles if r in member.roles]
+                    if roles_to_remove:
+                        try:
+                            await member.remove_roles(
+                                *roles_to_remove,
+                                reason="缺少必要身分組 (21/22) → 自動收回 16~20"
+                            )
+                            cleaned_members += 1
+                            print(f"[依賴收回] {member}，移除 {len(roles_to_remove)} 個主身分組")
+                        except discord.HTTPException as e:
+                            print(f"[依賴收回失敗] {member}：{e}")
+
+                idx += 1
+                if idx % BATCH_SIZE == 0:
+                    await asyncio.sleep(1)
+
+            print(f"依賴檢查完成，本輪共處理 {cleaned_members} 位成員\n")
+
+        except Exception as e:
+            import traceback
+
+            print("[check_role_dependencies] 迴圈內發生未捕捉錯誤，已攔截避免 loop 停止")
+            traceback.print_exception(type(e), e, e.__traceback__)
+
+    @check_role_dependencies.before_loop
+    async def before_check_role_dependencies(self):
+        await self.bot.wait_until_ready()
+        print("身分組依賴檢查 task 已啟動")
+
+
 
     @check_role_members.before_loop
     async def before_check_role_members(self):

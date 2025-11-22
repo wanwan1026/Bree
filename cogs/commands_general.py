@@ -1,10 +1,47 @@
 # cogs/commands_general.py
 import random
+import asyncio
 import discord
 from discord.ext import commands
+from discord import app_commands
 
-from config import ROLE_ID14
+from config import (
+    ROLE_ID14,
+    TAG_GUILD_ID,  
+    TAG_ROLE_ID,  
+    TAG_STRING,   
+    ROLE_ID16,     
+    ROLE_ID17,      
+    ROLE_ID18,  
+    ROLE_ID19,    
+    ROLE_ID20,    
+    ROLE_ID21,     
+    ROLE_ID22,     
+)
 
+def member_has_server_tag(member: discord.Member) -> bool:
+    """
+    跟 events.py 裡一樣的邏輯：
+    - primary_guild.id 要是 TAG_GUILD_ID
+    - primary_guild.tag 要等於 TAG_STRING
+    - enabled 不是 False
+    """
+    pg = getattr(member, "primary_guild", None)
+    if pg is None:
+        return False
+
+    pg_id = getattr(pg, "id", None)
+    pg_tag = getattr(pg, "tag", None)
+    enabled = getattr(pg, "enabled", None)
+
+    if pg_id != TAG_GUILD_ID:
+        return False
+    if pg_tag != TAG_STRING:
+        return False
+    if enabled is False:
+        return False
+
+    return True
 
 # ===== Flag 定義們 =====
 class vip_add_member_Flags(commands.FlagConverter):
@@ -227,6 +264,99 @@ class GeneralCommands(commands.Cog):
         )
         await ctx.send(message_content)
 
+    # ====== /檢查身分組 ======
+    @commands.hybrid_command(name="檢查身分組",help="同時檢查 TAG 身分組與 16~20 是否符合 21 & 22 依賴規則。",)
+    async def check_roles_all(self, ctx: commands.Context):
+        guild = ctx.guild
+        if guild is None:
+            await ctx.send("這個指令只能在伺服器裡使用。")
+            return
+
+        if guild.id != TAG_GUILD_ID:
+            await ctx.send("這個伺服器不是設定中的 TAG_GUILD_ID，無法執行檢查。")
+            return
+
+        tag_role = guild.get_role(TAG_ROLE_ID)
+        if tag_role is None:
+            await ctx.send("找不到 TAG 身分組，請檢查 TAG_ROLE_ID 設定。")
+            return
+
+        # 主要身分組與必要身分組
+        main_role_ids = [ROLE_ID16, ROLE_ID17, ROLE_ID18, ROLE_ID19, ROLE_ID20]
+        required_role_ids = [ROLE_ID21, ROLE_ID22]
+
+        main_roles = [guild.get_role(rid) for rid in main_role_ids]
+        required_roles = [guild.get_role(rid) for rid in required_role_ids]
+
+        # 過濾掉 None
+        main_roles = [r for r in main_roles if r is not None]
+        required_roles = [r for r in required_roles if r is not None]
+
+        if not main_roles:
+            await ctx.send("找不到任何主身分組 (16~20)，請檢查設定。")
+            return
+        if len(required_roles) < 2:
+            await ctx.send("必要身分組 (21 / 22) 少於 2 個，請檢查設定。")
+            return
+
+        await ctx.send("開始檢查 TAG 與身分組依賴，可能需要一些時間，請稍候……")
+
+        BATCH_SIZE = 50
+        idx = 0
+        tag_removed = 0
+        dep_cleaned = 0
+
+        # 🔹 只檢查「有相關身分組」的成員，不全伺服器掃
+        members_to_check = set()
+
+        # 有 TAG_ROLE 的人（要做 TAG 檢查）
+        members_to_check.update(tag_role.members)
+
+        # 有 16~20 其中任一個的人（要做依賴檢查）
+        for r in main_roles:
+            members_to_check.update(r.members)
+
+        # 迴圈裡就不用 fetch_members 了，直接跑這個集合
+        for member in list(members_to_check):
+            if member.bot:
+                continue
+
+            # ===== 1. TAG 檢查：沒有伺服器 TAG 就收回 TAG_ROLE_ID =====
+            if tag_role in member.roles and not member_has_server_tag(member):
+                try:
+                    await member.remove_roles(
+                        tag_role,
+                        reason="手動檢查：未使用伺服器 TAG → 自動收回",
+                    )
+                    tag_removed += 1
+                except discord.HTTPException as e:
+                    print(f"[手動TAG收回失敗] {member}：{e}")
+
+            # ===== 2. 依賴檢查：16~20 需要同時擁有 21 & 22 =====
+            has_main = any(r in member.roles for r in main_roles)
+            if has_main:
+                has_all_required = all(r in member.roles for r in required_roles)
+                if not has_all_required:
+                    roles_to_remove = [r for r in main_roles if r in member.roles]
+                    if roles_to_remove:
+                        try:
+                            await member.remove_roles(
+                                *roles_to_remove,
+                                reason="手動檢查：缺少 21/22 → 自動收回 16~20",
+                            )
+                            dep_cleaned += 1
+                        except discord.HTTPException as e:
+                            print(f"[手動依賴收回失敗] {member}：{e}")
+
+            idx += 1
+            if idx % BATCH_SIZE == 0:
+                await asyncio.sleep(1)
+
+        await ctx.send(
+            f"✅ 檢查完成：\n"
+            f"- 收回 TAG 身分組：{tag_removed} 人\n"
+            f"- 因缺少 21/22 而移除 16~20：{dep_cleaned} 人"
+        )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(GeneralCommands(bot))

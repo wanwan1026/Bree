@@ -27,3 +27,13 @@ TIME_CAPSULE_RELAY_CHANNEL_ID  = 1439139369515614249  # 收集／重發的頻道
 TAG_GUILD_ID = int(os.getenv("guild_id")) 
 TAG_ROLE_ID = int(os.getenv("ROLE_ID15"))
 TAG_STRING = os.getenv("STRING")
+
+# === check ===
+ROLE_ID16 = int(os.getenv("ROLE_ID16"))
+ROLE_ID17 = int(os.getenv("ROLE_ID17"))
+ROLE_ID18 = int(os.getenv("ROLE_ID18"))
+ROLE_ID19 = int(os.getenv("ROLE_ID19"))
+ROLE_ID20 = int(os.getenv("ROLE_ID20"))
+
+ROLE_ID21 = int(os.getenv("ROLE_ID21"))
+ROLE_ID22 = int(os.getenv("ROLE_ID22"))

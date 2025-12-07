@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from typing import Optional
+import time
 
 from config import (
     ROLE_ID14,
@@ -362,8 +363,17 @@ class GeneralCommands(commands.Cog):
     ):
         guild = interaction.guild
         if guild is None:
+            print("[DEBUG] autocomplete: guild is None，回空陣列")
             return []
 
+        # 🔹 每 30 秒產生一個新的「版本值」
+        #    目的就是讓 Discord 客戶端認為這次的 autocomplete 結果是「新的」，
+        #    不要一直吃舊的 cache。
+        version = int(time.time() // 30)
+
+        print(f"[DEBUG] autocomplete fired: guild={guild.id}, current={current!r}, version={version}")
+
+        # 一樣動態重建遊戲身分組對照表
         game_role_map = build_game_role_map(guild)  # {名稱: ID}
 
         # 依照名稱排序，讓列表比較穩定
@@ -373,10 +383,13 @@ class GeneralCommands(commands.Cog):
         for name in names:
             # 沒輸入就全部丟，打字就做簡單包含過濾
             if not current or current.lower() in name.lower():
-                choices.append(app_commands.Choice(name=name, value=name))
+                # name 是給使用者看的文字；value 仍然用原本的「純名稱」
+                # version 只拿來讓這次的 autocomplete 結果在 Discord 端被視為新的
+                label = name  # 如果你不介意顯示版本，也可以寫 f"{name} (v{version})"
+                choices.append(app_commands.Choice(name=label, value=name))
 
         # 一次最多只能給 Discord 25 個
-        print(f"[DEBUG] autocomplete: current='{current}', 回傳 {len(choices[:25])} 個選項")
+        print(f"[DEBUG] autocomplete: current={current!r}, version={version}, 回傳 {len(choices[:25])} 個選項")
         return choices[:25]
 
     # ====== /隨機抽獎 ======

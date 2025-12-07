@@ -4,20 +4,119 @@ import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
+from typing import Optional
 
 from config import (
     ROLE_ID14,
-    TAG_GUILD_ID,  
-    TAG_ROLE_ID,  
-    TAG_STRING,   
-    ROLE_ID16,     
-    ROLE_ID17,      
-    ROLE_ID18,  
-    ROLE_ID19,    
-    ROLE_ID20,    
-    ROLE_ID21,     
-    ROLE_ID22,     
+    TAG_GUILD_ID,
+    TAG_ROLE_ID,
+    TAG_STRING,
+    ROLE_ID16,
+    ROLE_ID17,
+    ROLE_ID18,
+    ROLE_ID19,
+    ROLE_ID20,
+    ROLE_ID21,
+    ROLE_ID22,
+    ROLE_GAME_ID1,
+    ROLE_GAME_ID2,
+    ROLE_GAME_ID3,
+    ROLE_GAME_ID4,
+    ROLE_GAME_ID5,
+    ROLE_GAME_ID6,
+    ROLE_GAME_ID7,
+    ROLE_GAME_ID8,
+    ROLE_GAME_ID9,
+    ROLE_GAME_ID10,
+    ROLE_GAME_ID11,
+    ROLE_GAME_ID12,
+    ROLE_GAME_ID13,
+    ROLE_GAME_ID14,
+    ROLE_GAME_ID15,
+    ROLE_GAME_ID16,
+    ROLE_GAME_ID17,
+    ROLE_GAME_ID18,
+    ROLE_GAME_ID19,
+    ROLE_GAME_ID20,
+    ROLE_GAME_ID21,
+    ROLE_GAME_ID22,
+    ROLE_GAME_ID23,
+    ROLE_GAME_ID24,
+    ROLE_GAME_ID25,
+    ROLE_GAME_ID26,
+    ROLE_GAME_ID27,
+    ROLE_GAME_ID28,
+    ROLE_GAME_ID29,
+    ROLE_GAME_ID30,
+    ROLE_GAME_ID31,
+    ROLE_GAME_ID32,
+    ROLE_GAME_ID33,
+    ROLE_GAME_ID34,
+    ROLE_GAME_ID35,
+    ROLE_GAME_ID36,
+    ROLE_GAME_ID37,
+    guild_id
 )
+
+GAME_ROLE_IDS = [
+    ROLE_GAME_ID1,
+    ROLE_GAME_ID2,
+    ROLE_GAME_ID3,
+    ROLE_GAME_ID4,
+    ROLE_GAME_ID5,
+    ROLE_GAME_ID6,
+    ROLE_GAME_ID7,
+    ROLE_GAME_ID8,
+    ROLE_GAME_ID9,
+    ROLE_GAME_ID10,
+    ROLE_GAME_ID11,
+    ROLE_GAME_ID12,
+    ROLE_GAME_ID13,
+    ROLE_GAME_ID14,
+    ROLE_GAME_ID15,
+    ROLE_GAME_ID16,
+    ROLE_GAME_ID17,
+    ROLE_GAME_ID18,
+    ROLE_GAME_ID19,
+    ROLE_GAME_ID20,
+    ROLE_GAME_ID21,
+    ROLE_GAME_ID22,
+    ROLE_GAME_ID23,
+    ROLE_GAME_ID24,
+    ROLE_GAME_ID25,
+    ROLE_GAME_ID26,
+    ROLE_GAME_ID27,
+    ROLE_GAME_ID28,
+    ROLE_GAME_ID29,
+    ROLE_GAME_ID30,
+    ROLE_GAME_ID31,
+    ROLE_GAME_ID32,
+    ROLE_GAME_ID33,
+    ROLE_GAME_ID34,
+    ROLE_GAME_ID35,
+    ROLE_GAME_ID36,
+    ROLE_GAME_ID37,
+]
+
+
+def build_game_role_map(guild: discord.Guild) -> dict[str, int]:
+    """
+    從設定好的 ROLE_GAME_ID* 建立 {角色名稱: 角色ID} 對照表
+    """
+    game_role_map: dict[str, int] = {}
+
+    print(f"[DEBUG] build_game_role_map: guild={guild.id} start")
+
+    for role_id in GAME_ROLE_IDS:
+        role = guild.get_role(role_id)
+        if role:
+            game_role_map[role.name] = role.id
+
+    print(
+        f"[DEBUG] build_game_role_map: 完成，總數={len(game_role_map)}，名稱={list(game_role_map.keys())}"
+    )
+    return game_role_map
+
 
 def member_has_server_tag(member: discord.Member) -> bool:
     """
@@ -43,6 +142,7 @@ def member_has_server_tag(member: discord.Member) -> bool:
 
     return True
 
+
 # ===== Flag 定義們 =====
 class vip_add_member_Flags(commands.FlagConverter):
     頻道: discord.VoiceChannel = commands.flag(description="選擇語音房")
@@ -59,7 +159,7 @@ class vip_view_Flags(commands.FlagConverter):
 
 
 class hang_out_Flags(commands.FlagConverter):
-    項目: str = commands.flag(description="主題內容(Game name)")
+    # 現在只給文字版指令用，斜線指令改用參數 & autocomplete
     時間: str = commands.flag(description="開始時間(Starting time)")
     人數: str = commands.flag(description="需求人數(People needed)")
     備註: str = commands.flag(description="備註(Remark)")
@@ -169,19 +269,50 @@ class GeneralCommands(commands.Cog):
         else:
             await ctx.send("沒有任何成員具有該語音頻道的檢視權限！")
 
-    # ====== /揪團 ======
+    # ====== /揪團（斜線指令：項目用 autocomplete） ======
     @commands.hybrid_command(
         name="揪團",
         help="找人一起玩遊戲或聊天或看影片(Let's hang out together and play games.)",
     )
-    async def hang_out(self, ctx: commands.Context, *, flags: hang_out_Flags):
-        項目 = flags.項目
-        時間 = flags.時間
-        人數 = flags.人數
-        備註 = flags.備註
-        頻道 = flags.頻道
+    @app_commands.describe(
+        項目="選擇遊戲(Game name)",
+        時間="開始時間(Starting time)",
+        人數="需求人數(People needed)",
+        備註="備註(Remark)",
+        頻道="選擇語音房(Voice channel)",
+    )
+    async def hang_out(
+        self,
+        ctx: commands.Context,
+        項目: str,
+        時間: str,
+        人數: str,
+        頻道: discord.VoiceChannel,
+        備註: Optional[str] = "無備註",
+    ):
+        """
+        斜線版：/揪團 項目 <autocomplete> ...
+        文字版依然可以寫：/揪團 項目:xxx 時間:xx ...（取決於你怎麼用）
+        """
+        print(f"[DEBUG] /揪團 被呼叫：項目={項目}, 時間={時間}, 人數={人數}, 備註={備註}, 頻道={getattr(頻道, 'id', None)}")
 
-        role_mention = f"<@&{ROLE_ID14}>"
+        if ctx.guild is None:
+            await ctx.send("這個指令只能在伺服器裡使用。")
+            return
+
+        # 取得「名稱 -> role_id」對照
+        game_role_map = build_game_role_map(ctx.guild)
+        game_role_id = game_role_map.get(項目)
+
+        # 準備要 @ 的身分組
+        mentions = [f"<@&{ROLE_ID14}>"]
+        if game_role_id:
+            mentions.append(f"<@&{game_role_id}>")
+        else:
+            # 找不到對應的遊戲身分組，印個 log 幫 debug
+            print(f"[DEBUG] /揪團: 在 game_role_map 裡找不到項目='{項目}' 對應的身分組")
+
+        role_mention = " ".join(mentions)
 
         message_content = (
             f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
@@ -196,13 +327,57 @@ class GeneralCommands(commands.Cog):
             "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
         )
 
-        channel2 = ctx.channel
-        await channel2.send(f"{role_mention}")
+        # 先 ping 身分組
+        await ctx.send(role_mention)
 
-        message = await ctx.send(message_content)
+        # 再發揪團內容
+        msg = await ctx.send(message_content)
         member_nick = ctx.author.nick or ctx.author.display_name
-        thread = await message.create_thread(name=f"{member_nick}")
-        await thread.send("布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得講一聲喔")
+
+        # ✅ 用「頻道」來建立 thread，而不是 msg.create_thread()
+        channel = ctx.channel
+
+        try:
+            # 只有在有 guild 的情況下才建 thread（避免 DM 出錯）
+            if ctx.guild is not None and isinstance(channel, discord.TextChannel):
+                thread = await channel.create_thread(
+                    name=f"{member_nick}",
+                    message=msg,      # 把這則訊息當作 thread 的起始訊息
+                )
+                await thread.send(
+                    "布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得在這裡講一聲喔"
+                )
+            else:
+                print("[DEBUG] /揪團: 無法建立 thread（不是 guild 或不是文字頻道）")
+        except Exception as e:
+            print(f"[DEBUG] /揪團: 建立 thread 失敗：{e}")
+
+
+    # ====== /揪團：項目 autocomplete（用遊戲身分組名稱） ======
+    @hang_out.autocomplete("項目")
+    async def hang_out_game_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ):
+        guild = interaction.guild
+        if guild is None:
+            return []
+
+        game_role_map = build_game_role_map(guild)  # {名稱: ID}
+
+        # 依照名稱排序，讓列表比較穩定
+        names = sorted(game_role_map.keys())
+
+        choices: list[app_commands.Choice[str]] = []
+        for name in names:
+            # 沒輸入就全部丟，打字就做簡單包含過濾
+            if not current or current.lower() in name.lower():
+                choices.append(app_commands.Choice(name=name, value=name))
+
+        # 一次最多只能給 Discord 25 個
+        print(f"[DEBUG] autocomplete: current='{current}', 回傳 {len(choices[:25])} 個選項")
+        return choices[:25]
 
     # ====== /隨機抽獎 ======
     @commands.hybrid_command(name="隨機抽獎", help="從指定身分組抽出得獎者")
@@ -265,7 +440,10 @@ class GeneralCommands(commands.Cog):
         await ctx.send(message_content)
 
     # ====== /檢查身分組 ======
-    @commands.hybrid_command(name="檢查身分組",help="同時檢查 TAG 身分組與 16~20 是否符合 21 & 22 依賴規則。",)
+    @commands.hybrid_command(
+        name="檢查身分組",
+        help="同時檢查 TAG 身分組與 16~20 是否符合 21 & 22 依賴規則。",
+    )
     async def check_roles_all(self, ctx: commands.Context):
         guild = ctx.guild
         if guild is None:
@@ -357,6 +535,7 @@ class GeneralCommands(commands.Cog):
             f"- 收回 TAG 身分組：{tag_removed} 人\n"
             f"- 因缺少 21/22 而移除 16~20：{dep_cleaned} 人"
         )
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(GeneralCommands(bot))

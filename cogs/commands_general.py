@@ -356,40 +356,40 @@ class GeneralCommands(commands.Cog):
 
     # ====== /揪團：項目 autocomplete（用遊戲身分組名稱） ======
     @hang_out.autocomplete("項目")
-    async def hang_out_game_autocomplete(
-        self,
-        interaction: discord.Interaction,
-        current: str,
-    ):
+    async def hang_out_game_autocomplete(self, interaction: discord.Interaction, current: str):
         guild = interaction.guild
         if guild is None:
-            print("[DEBUG] autocomplete: guild is None，回空陣列")
             return []
 
-        # 🔹 每 30 秒產生一個新的「版本值」
-        #    目的就是讓 Discord 客戶端認為這次的 autocomplete 結果是「新的」，
-        #    不要一直吃舊的 cache。
         version = int(time.time() // 30)
 
         print(f"[DEBUG] autocomplete fired: guild={guild.id}, current={current!r}, version={version}")
 
-        # 一樣動態重建遊戲身分組對照表
-        game_role_map = build_game_role_map(guild)  # {名稱: ID}
-
-        # 依照名稱排序，讓列表比較穩定
+        game_role_map = build_game_role_map(guild)
         names = sorted(game_role_map.keys())
 
-        choices: list[app_commands.Choice[str]] = []
-        for name in names:
-            # 沒輸入就全部丟，打字就做簡單包含過濾
-            if not current or current.lower() in name.lower():
-                # name 是給使用者看的文字；value 仍然用原本的「純名稱」
-                # version 只拿來讓這次的 autocomplete 結果在 Discord 端被視為新的
-                label = name  # 如果你不介意顯示版本，也可以寫 f"{name} (v{version})"
-                choices.append(app_commands.Choice(name=label, value=name))
+        choices = []
 
-        # 一次最多只能給 Discord 25 個
-        print(f"[DEBUG] autocomplete: current={current!r}, version={version}, 回傳 {len(choices[:25])} 個選項")
+        # 🔹 建議的遊戲清單
+        for name in names:
+            if not current or current.lower() in name.lower():
+                choices.append(
+                    app_commands.Choice(
+                        name=name,
+                        value=name      # ← 使用標準值
+                    )
+                )
+
+        # 🔹 如果使用者輸入沒有在選單裡，提供「自由輸入」選項
+        if current and current not in names:
+            choices.insert(
+                0,
+                app_commands.Choice(
+                    name=f"使用自訂輸入：{current}",
+                    value=current    # ← value 保留使用者輸入
+                )
+            )
+
         return choices[:25]
 
     # ====== /隨機抽獎 ======

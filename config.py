@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Bot Token
-BOT_TOKEN = os.getenv("BOT_TOKEN1")
+BOT_TOKEN = os.getenv("BOT_TOKEN3")
 
 # 角色 ID
 ROLE_ID10 = int(os.getenv("ROLE_ID10"))  # 銀

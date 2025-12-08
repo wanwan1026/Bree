@@ -99,6 +99,32 @@ GAME_ROLE_IDS = [
     ROLE_GAME_ID37,
 ]
 
+GAME_OPTIONS: dict[str, dict] = {
+
+    "apex": {"label": "APEX 英雄", "role_id": ROLE_GAME_ID25}, 
+    "lol": {"label": "LOL 英雄聯盟", "role_id": ROLE_GAME_ID23}, 
+    "valo": {"label": "特戰英豪", "role_id": ROLE_GAME_ID24}, 
+    "garena": {"label": "傳說對決", "role_id": ROLE_GAME_ID28}, 
+    "five": {"label": "第五人格", "role_id": ROLE_GAME_ID30}, 
+    "delta": {"label": "三角洲行動", "role_id": ROLE_GAME_ID31}, 
+    "six": {"label": "燕雲十六聲", "role_id": ROLE_GAME_ID37}, 
+    "roblox": {"label": "ROBLOX", "role_id": ROLE_GAME_ID13}, 
+    "maple": {"label": "楓之谷", "role_id": ROLE_GAME_ID15}, 
+    "majsoul": {"label": "雀魂麻將", "role_id": ROLE_GAME_ID16}, 
+    "repo": {"label": "REPO", "role_id": ROLE_GAME_ID17}, 
+    "shope": {"label": "夢之形", "role_id": ROLE_GAME_ID22}, 
+    "dream": {"label": "卡厄思夢境", "role_id": ROLE_GAME_ID1}, 
+    "vitor": {"label": "勝利女神妮姬", "role_id": ROLE_GAME_ID6}, 
+    "sky": {"label": "崩壞：星穹鐵道", "role_id": ROLE_GAME_ID3}, 
+    "god": {"label": "原神", "role_id": ROLE_GAME_ID14}, 
+    "wuth": {"label": "鳴潮", "role_id": ROLE_GAME_ID2},
+    "zero": {"label": "絕區零", "role_id": ROLE_GAME_ID5},
+    "talk": {"label": "聊天", "role_id": ROLE_GAME_ID12},
+    "sing": {"label": "唱歌", "role_id": ROLE_GAME_ID8},
+    "other": {"label": "其他遊戲", "role_id": ROLE_GAME_ID10},
+
+}
+
 
 def build_game_role_map(guild: discord.Guild) -> dict[str, int]:
     """
@@ -282,44 +308,49 @@ class GeneralCommands(commands.Cog):
         備註="備註(Remark)",
         頻道="選擇語音房(Voice channel)",
     )
+    @app_commands.choices(
+        項目=[
+            app_commands.Choice(name=opt["label"], value=key)
+            for key, opt in GAME_OPTIONS.items()
+        ]
+    )
     async def hang_out(
         self,
         ctx: commands.Context,
-        項目: str,
+        項目: str,                   # ← 保持 str，就可以當普通文字用
         時間: str,
         人數: str,
         頻道: discord.VoiceChannel,
         備註: Optional[str] = "無備註",
     ):
-        """
-        斜線版：/揪團 項目 <autocomplete> ...
-        文字版依然可以寫：/揪團 項目:xxx 時間:xx ...（取決於你怎麼用）
-        """
-        print(f"[DEBUG] /揪團 被呼叫：項目={項目}, 時間={時間}, 人數={人數}, 備註={備註}, 頻道={getattr(頻道, 'id', None)}")
+        print(
+            f"[DEBUG] /揪團 被呼叫：項目_key={項目}, "
+            f"時間={時間}, 人數={人數}, 備註={備註}, 頻道={getattr(頻道, 'id', None)}"
+        )
 
         if ctx.guild is None:
             await ctx.send("這個指令只能在伺服器裡使用。")
             return
 
-        # 取得「名稱 -> role_id」對照
-        game_role_map = build_game_role_map(ctx.guild)
-        game_role_id = game_role_map.get(項目)
+        # 依照「項目」的 key 找到對應設定
+        game_info = GAME_OPTIONS.get(項目)
+        if game_info is None:
+            await ctx.send("這個項目不在遊戲清單裡，請重新選擇。")
+            return
 
-        # 準備要 @ 的身分組
-        mentions = [f"<@&{ROLE_ID14}>"]
-        if game_role_id:
-            mentions.append(f"<@&{game_role_id}>")
-        else:
-            # 找不到對應的遊戲身分組，印個 log 幫 debug
-            print(f"[DEBUG] /揪團: 在 game_role_map 裡找不到項目='{項目}' 對應的身分組")
+        game_name = game_info["label"]
+        game_role_id = game_info["role_id"]
 
-        role_mention = " ".join(mentions)
+        # 準備要 @ 的身分組：固定 ROLE_ID14 + 對應遊戲身分組
+        
+        role_mention = f"<@&{ROLE_ID14}>"
+        role_mention2 = f"<@&{game_role_id}>"
 
         message_content = (
             f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
             f"主揪：{ctx.author.mention}\n"
             "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
-            f"<:No_001:1133419740166115359>項目(Item)：{項目}\n"
+            f"<:No_001:1133419740166115359>項目(Item)：{game_name}\n"
             f"<:No_002:1133419757215953039>時間(Time)：{時間}\n"
             f"<:No_003:1133419774500671518>人數(People)：{人數}\n"
             f"<:No_004:1133419788014731325>備註(Remark)：{備註}\n"
@@ -329,21 +360,22 @@ class GeneralCommands(commands.Cog):
         )
 
         # 先 ping 身分組
-        await ctx.send(role_mention)
+        channel2 = ctx.channel
+        await channel2.send(f"{role_mention}")
+
+        if role_mention2 != "":
+            await channel2.send(f"{role_mention2}")
 
         # 再發揪團內容
         msg = await ctx.send(message_content)
         member_nick = ctx.author.nick or ctx.author.display_name
-
-        # ✅ 用「頻道」來建立 thread，而不是 msg.create_thread()
         channel = ctx.channel
 
         try:
-            # 只有在有 guild 的情況下才建 thread（避免 DM 出錯）
             if ctx.guild is not None and isinstance(channel, discord.TextChannel):
                 thread = await channel.create_thread(
                     name=f"{member_nick}",
-                    message=msg,      # 把這則訊息當作 thread 的起始訊息
+                    message=msg,
                 )
                 await thread.send(
                     "布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得在這裡講一聲喔"
@@ -352,45 +384,6 @@ class GeneralCommands(commands.Cog):
                 print("[DEBUG] /揪團: 無法建立 thread（不是 guild 或不是文字頻道）")
         except Exception as e:
             print(f"[DEBUG] /揪團: 建立 thread 失敗：{e}")
-
-
-    # ====== /揪團：項目 autocomplete（用遊戲身分組名稱） ======
-    @hang_out.autocomplete("項目")
-    async def hang_out_game_autocomplete(self, interaction: discord.Interaction, current: str):
-        guild = interaction.guild
-        if guild is None:
-            return []
-
-        version = int(time.time() // 30)
-
-        print(f"[DEBUG] autocomplete fired: guild={guild.id}, current={current!r}, version={version}")
-
-        game_role_map = build_game_role_map(guild)
-        names = sorted(game_role_map.keys())
-
-        choices = []
-
-        # 🔹 建議的遊戲清單
-        for name in names:
-            if not current or current.lower() in name.lower():
-                choices.append(
-                    app_commands.Choice(
-                        name=name,
-                        value=name      # ← 使用標準值
-                    )
-                )
-
-        # 🔹 如果使用者輸入沒有在選單裡，提供「自由輸入」選項
-        if current and current not in names:
-            choices.insert(
-                0,
-                app_commands.Choice(
-                    name=f"使用自訂輸入：{current}",
-                    value=current    # ← value 保留使用者輸入
-                )
-            )
-
-        return choices[:25]
 
     # ====== /隨機抽獎 ======
     @commands.hybrid_command(name="隨機抽獎", help="從指定身分組抽出得獎者")

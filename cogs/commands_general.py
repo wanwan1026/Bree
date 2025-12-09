@@ -323,6 +323,8 @@ class GeneralCommands(commands.Cog):
         頻道: discord.VoiceChannel,
         備註: Optional[str] = "無備註",
     ):
+        await ctx.defer()
+        
         print(
             f"[DEBUG] /揪團 被呼叫：項目_key={項目}, "
             f"時間={時間}, 人數={人數}, 備註={備註}, 頻道={getattr(頻道, 'id', None)}"

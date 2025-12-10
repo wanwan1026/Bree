@@ -124,7 +124,7 @@ GAME_OPTIONS: dict[str, dict] = {
     "god": {"label": "原神", "role_id": ROLE_GAME_ID14}, 
     "wuth": {"label": "鳴潮", "role_id": ROLE_GAME_ID2},
     "zero": {"label": "絕區零", "role_id": ROLE_GAME_ID5},
-    
+
     "talk": {"label": "聊天", "role_id": ROLE_GAME_ID12},
     "sing": {"label": "唱歌", "role_id": ROLE_GAME_ID8},
     "other": {"label": "其他遊戲", "role_id": ROLE_GAME_ID10},
@@ -213,13 +213,11 @@ class draw_Flags(commands.FlagConverter):
 class HangoutModal(discord.ui.Modal):
     def __init__(self, ctx: commands.Context, game_key: str, game_name: str, voice_channel: discord.VoiceChannel):
         super().__init__(title="填寫揪團資訊")
-
         self.ctx = ctx
         self.game_key = game_key
         self.game_name = game_name
         self.voice_channel = voice_channel
 
-        # 時間
         self.time_input = discord.ui.TextInput(
             label="時間(Time)",
             placeholder="例：今晚 20:00、現在、待定...",
@@ -228,7 +226,6 @@ class HangoutModal(discord.ui.Modal):
         )
         self.add_item(self.time_input)
 
-        # 人數
         self.people_input = discord.ui.TextInput(
             label="人數(People)",
             placeholder="例：還缺 3 人 / 4 人滿",
@@ -237,7 +234,6 @@ class HangoutModal(discord.ui.Modal):
         )
         self.add_item(self.people_input)
 
-        # 備註
         self.remark_input = discord.ui.TextInput(
             label="備註(Remark)",
             style=discord.TextStyle.paragraph,
@@ -248,27 +244,36 @@ class HangoutModal(discord.ui.Modal):
         self.add_item(self.remark_input)
 
     async def on_submit(self, interaction: discord.Interaction):
+        """先回 interaction，再丟到背景 task 處理"""
+        # 先 defer，避免 3 秒沒回應被判 timeout
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        # 把真正的處理丟到背景 task，避免「感覺上」整個 bot 卡在這裡
+        asyncio.create_task(self._process_submit(interaction))
+
+    async def _process_submit(self, interaction: discord.Interaction):
         ctx = self.ctx
         guild = ctx.guild
         channel = ctx.channel
 
-        # 取出輸入內容
         時間 = self.time_input.value.strip() or "未填寫"
         人數 = self.people_input.value.strip() or "未填寫"
         備註 = self.remark_input.value.strip() or "無備註"
 
         game_info = GAME_OPTIONS.get(self.game_key)
         if game_info is None:
-            await interaction.response.send_message(
-                "發生錯誤：找不到對應的遊戲設定 QQ",
-                ephemeral=True,
-            )
+            try:
+                await interaction.followup.send(
+                    "發生錯誤：找不到對應的遊戲設定 QQ",
+                    ephemeral=True,
+                )
+            except discord.HTTPException:
+                pass
             return
 
         game_name = game_info["label"]
         game_role_id = game_info["role_id"]
 
-        # 要 @ 的身分組
         base_tag = f"<@&{ROLE_ID14}>"
         game_tag = f"<@&{game_role_id}>" if game_role_id else ""
 
@@ -285,26 +290,25 @@ class HangoutModal(discord.ui.Modal):
             "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
         )
 
-        # 這裡全部 try/except，避免 API 掛掉整個卡住
         try:
-            # ping 身分組
+            # ping 身分組（失敗就算了，只印 log）
             try:
                 await channel.send(f"{base_tag} {game_tag}".strip())
             except Exception as e:
                 print(f"[DEBUG] 揪團: ping 身分組失敗：{e}")
 
-            # 發揪團內容
+            # 發揪團訊息
             try:
                 msg = await channel.send(message_content)
             except Exception as e:
                 print(f"[DEBUG] 揪團: 發揪團訊息失敗：{e}")
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     "揪團訊息送出失敗 QQ，請稍後再試。",
                     ephemeral=True,
                 )
                 return
 
-            # 嘗試開討論串
+            # 嘗試建立 thread
             try:
                 if guild is not None and isinstance(channel, discord.TextChannel):
                     member_nick = ctx.author.nick or ctx.author.display_name
@@ -320,19 +324,22 @@ class HangoutModal(discord.ui.Modal):
             except Exception as e:
                 print(f"[DEBUG] 揪團: 建立 thread 失敗：{e}")
 
-            # 回覆 modal 提交者（避免「正在思考」卡住）
-            await interaction.response.send_message(
+            # 告知使用者完成（用 followup 因為前面已經 defer 了）
+            await interaction.followup.send(
                 "揪團已發布！一起玩吧 (๑•̀ㅂ•́)و✧",
                 ephemeral=True,
             )
+
         except Exception as e:
-            print(f"[DEBUG] 揪團: on_submit 整體流程錯誤：{e}")
-            # 如果還沒回覆過 interaction，就給一個保底訊息
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
+            print(f"[DEBUG] 揪團: _process_submit 整體流程錯誤：{e}")
+            try:
+                await interaction.followup.send(
                     "發生未知錯誤，揪團可能沒有成功送出 QQ",
                     ephemeral=True,
                 )
+            except discord.HTTPException:
+                # 真的完全送不出去就算了，只留 log
+                pass
 
 
 class GameSelect(discord.ui.Select):

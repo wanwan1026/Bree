@@ -106,19 +106,25 @@ GAME_OPTIONS: dict[str, dict] = {
     "valo": {"label": "特戰英豪", "role_id": ROLE_GAME_ID24}, 
     "garena": {"label": "傳說對決", "role_id": ROLE_GAME_ID28}, 
     "five": {"label": "第五人格", "role_id": ROLE_GAME_ID30}, 
+
     "delta": {"label": "三角洲行動", "role_id": ROLE_GAME_ID31}, 
     "six": {"label": "燕雲十六聲", "role_id": ROLE_GAME_ID37}, 
-    "roblox": {"label": "ROBLOX", "role_id": ROLE_GAME_ID13}, 
+    "roblox": {"label": "ROBLOX", "role_id": ROLE_GAME_ID13},
+    "決戰！平安京": {"label": "決戰！平安京", "role_id": ROLE_GAME_ID33}, 
+    "Super Animal Royale": {"label": "Super Animal Royale", "role_id": ROLE_GAME_ID21}, 
+
     "maple": {"label": "楓之谷", "role_id": ROLE_GAME_ID15}, 
     "majsoul": {"label": "雀魂麻將", "role_id": ROLE_GAME_ID16}, 
     "repo": {"label": "REPO", "role_id": ROLE_GAME_ID17}, 
     "shope": {"label": "夢之形", "role_id": ROLE_GAME_ID22}, 
     "dream": {"label": "卡厄思夢境", "role_id": ROLE_GAME_ID1}, 
+
     "vitor": {"label": "勝利女神妮姬", "role_id": ROLE_GAME_ID6}, 
     "sky": {"label": "崩壞：星穹鐵道", "role_id": ROLE_GAME_ID3}, 
     "god": {"label": "原神", "role_id": ROLE_GAME_ID14}, 
     "wuth": {"label": "鳴潮", "role_id": ROLE_GAME_ID2},
     "zero": {"label": "絕區零", "role_id": ROLE_GAME_ID5},
+    
     "talk": {"label": "聊天", "role_id": ROLE_GAME_ID12},
     "sing": {"label": "唱歌", "role_id": ROLE_GAME_ID8},
     "other": {"label": "其他遊戲", "role_id": ROLE_GAME_ID10},
@@ -202,6 +208,193 @@ class draw_Flags(commands.FlagConverter):
         description="得獎人必須擁有的身分組",
         default=[],
     )
+
+# ====== 揪團用 UI 元件 ======
+class HangoutModal(discord.ui.Modal):
+    def __init__(self, ctx: commands.Context, game_key: str, game_name: str, voice_channel: discord.VoiceChannel):
+        super().__init__(title="填寫揪團資訊")
+
+        self.ctx = ctx
+        self.game_key = game_key
+        self.game_name = game_name
+        self.voice_channel = voice_channel
+
+        # 時間
+        self.time_input = discord.ui.TextInput(
+            label="時間(Time)",
+            placeholder="例：今晚 20:00、現在、待定...",
+            required=True,
+            max_length=100,
+        )
+        self.add_item(self.time_input)
+
+        # 人數
+        self.people_input = discord.ui.TextInput(
+            label="人數(People)",
+            placeholder="例：還缺 3 人 / 4 人滿",
+            required=True,
+            max_length=50,
+        )
+        self.add_item(self.people_input)
+
+        # 備註
+        self.remark_input = discord.ui.TextInput(
+            label="備註(Remark)",
+            style=discord.TextStyle.paragraph,
+            placeholder="可留空，預設為「無備註」",
+            required=False,
+            max_length=400,
+        )
+        self.add_item(self.remark_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        ctx = self.ctx
+        guild = ctx.guild
+        channel = ctx.channel
+
+        # 取出輸入內容
+        時間 = self.time_input.value.strip() or "未填寫"
+        人數 = self.people_input.value.strip() or "未填寫"
+        備註 = self.remark_input.value.strip() or "無備註"
+
+        game_info = GAME_OPTIONS.get(self.game_key)
+        if game_info is None:
+            await interaction.response.send_message(
+                "發生錯誤：找不到對應的遊戲設定 QQ",
+                ephemeral=True,
+            )
+            return
+
+        game_name = game_info["label"]
+        game_role_id = game_info["role_id"]
+
+        # 要 @ 的身分組
+        base_tag = f"<@&{ROLE_ID14}>"
+        game_tag = f"<@&{game_role_id}>" if game_role_id else ""
+
+        message_content = (
+            f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
+            f"主揪：{ctx.author.mention}\n"
+            "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
+            f"<:No_001:1133419740166115359>項目(Item)：{game_name}\n"
+            f"<:No_002:1133419757215953039>時間(Time)：{時間}\n"
+            f"<:No_003:1133419774500671518>人數(People)：{人數}\n"
+            f"<:No_004:1133419788014731325>備註(Remark)：{備註}\n"
+            f"<:No_005:1133419804255076525>語音房連結(channel)：\n"
+            f"<:No_011:1167260028315639889> https://discord.com/channels/{guild.id}/{self.voice_channel.id}\n"
+            "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
+        )
+
+        # 這裡全部 try/except，避免 API 掛掉整個卡住
+        try:
+            # ping 身分組
+            try:
+                await channel.send(f"{base_tag} {game_tag}".strip())
+            except Exception as e:
+                print(f"[DEBUG] 揪團: ping 身分組失敗：{e}")
+
+            # 發揪團內容
+            try:
+                msg = await channel.send(message_content)
+            except Exception as e:
+                print(f"[DEBUG] 揪團: 發揪團訊息失敗：{e}")
+                await interaction.response.send_message(
+                    "揪團訊息送出失敗 QQ，請稍後再試。",
+                    ephemeral=True,
+                )
+                return
+
+            # 嘗試開討論串
+            try:
+                if guild is not None and isinstance(channel, discord.TextChannel):
+                    member_nick = ctx.author.nick or ctx.author.display_name
+                    thread = await channel.create_thread(
+                        name=f"{member_nick}",
+                        message=msg,
+                    )
+                    await thread.send(
+                        "布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得在這裡講一聲喔"
+                    )
+                else:
+                    print("[DEBUG] 揪團: 無法建立 thread（不是 guild 或不是文字頻道）")
+            except Exception as e:
+                print(f"[DEBUG] 揪團: 建立 thread 失敗：{e}")
+
+            # 回覆 modal 提交者（避免「正在思考」卡住）
+            await interaction.response.send_message(
+                "揪團已發布！一起玩吧 (๑•̀ㅂ•́)و✧",
+                ephemeral=True,
+            )
+        except Exception as e:
+            print(f"[DEBUG] 揪團: on_submit 整體流程錯誤：{e}")
+            # 如果還沒回覆過 interaction，就給一個保底訊息
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    "發生未知錯誤，揪團可能沒有成功送出 QQ",
+                    ephemeral=True,
+                )
+
+
+class GameSelect(discord.ui.Select):
+    def __init__(self, ctx: commands.Context, voice_channel: discord.VoiceChannel):
+        options = [
+            discord.SelectOption(label=opt["label"], value=key)
+            for key, opt in GAME_OPTIONS.items()
+        ]
+
+        super().__init__(
+            placeholder="選擇這次揪團的遊戲",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
+        self.ctx = ctx
+        self.voice_channel = voice_channel
+
+    async def callback(self, interaction: discord.Interaction):
+        # 限制只能發起人使用選單
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+                "只有發起揪團的人可以選擇遊戲喔～",
+                ephemeral=True,
+            )
+            return
+
+        game_key = self.values[0]
+        game_info = GAME_OPTIONS.get(game_key)
+        if game_info is None:
+            await interaction.response.send_message(
+                "這個遊戲不在清單裡 QQ",
+                ephemeral=True,
+            )
+            return
+
+        game_name = game_info["label"]
+
+        # 打開 Modal 讓他填時間、人數、備註
+        modal = HangoutModal(
+            ctx=self.ctx,
+            game_key=game_key,
+            game_name=game_name,
+            voice_channel=self.voice_channel,
+        )
+        await interaction.response.send_modal(modal)
+
+
+class GameSelectView(discord.ui.View):
+    def __init__(self, ctx: commands.Context, voice_channel: discord.VoiceChannel):
+        super().__init__(timeout=60)
+        self.add_item(GameSelect(ctx, voice_channel))
+
+    async def on_timeout(self) -> None:
+        # 超時後把選單 disable（避免一直可以點）
+        for child in self.children:
+            if isinstance(child, discord.ui.Select):
+                child.disabled = True
+        # 這裡沒辦法直接編輯訊息，因為沒有 msg 物件
+        # 如果你想編輯，需要在建立 View 時把 message 存起來
+        return
 
 
 class GeneralCommands(commands.Cog):
@@ -296,96 +489,40 @@ class GeneralCommands(commands.Cog):
         else:
             await ctx.send("沒有任何成員具有該語音頻道的檢視權限！")
 
-    # ====== /揪團（斜線指令：項目用 autocomplete） ======
+    # ====== /揪團：輸入 /揪團 就出選單 → 再出 Modal ======
     @commands.hybrid_command(
         name="揪團",
         help="找人一起玩遊戲或聊天或看影片(Let's hang out together and play games.)",
     )
     @app_commands.describe(
-        項目="選擇遊戲(Game name)",
-        時間="開始時間(Starting time)",
-        人數="需求人數(People needed)",
-        備註="備註(Remark)",
         頻道="選擇語音房(Voice channel)",
-    )
-    @app_commands.choices(
-        項目=[
-            app_commands.Choice(name=opt["label"], value=key)
-            for key, opt in GAME_OPTIONS.items()
-        ]
     )
     async def hang_out(
         self,
         ctx: commands.Context,
-        項目: str,                   # ← 保持 str，就可以當普通文字用
-        時間: str,
-        人數: str,
         頻道: discord.VoiceChannel,
-        備註: Optional[str] = "無備註",
     ):
-        await ctx.defer()
-        
-        print(
-            f"[DEBUG] /揪團 被呼叫：項目_key={項目}, "
-            f"時間={時間}, 人數={人數}, 備註={備註}, 頻道={getattr(頻道, 'id', None)}"
-        )
-
+        """
+        使用方式：
+        /揪團 頻道:<語音頻道>
+        → Bot 回一則訊息，裡面有遊戲選單
+        → 選好遊戲後會跳出 Modal 填「時間、人數、備註」
+        → 送出後會發揪團貼文 + 嘗試開討論串
+        """
         if ctx.guild is None:
             await ctx.send("這個指令只能在伺服器裡使用。")
             return
 
-        # 依照「項目」的 key 找到對應設定
-        game_info = GAME_OPTIONS.get(項目)
-        if game_info is None:
-            await ctx.send("這個項目不在遊戲清單裡，請重新選擇。")
-            return
-
-        game_name = game_info["label"]
-        game_role_id = game_info["role_id"]
-
-        # 準備要 @ 的身分組：固定 ROLE_ID14 + 對應遊戲身分組
-        
-        role_mention = f"<@&{ROLE_ID14}>"
-        role_mention2 = f"<@&{game_role_id}>"
-
-        message_content = (
-            f"## <:No_011:1166191020829069394> 新的揪團開啟囉 <:No_010:1133574932534665297> \n"
-            f"主揪：{ctx.author.mention}\n"
-            "╭⌕˚꒷ ͝ ꒦₍ᕱ.⑅.ᕱ₎꒦꒷ ͝ ꒦ ͝\n"
-            f"<:No_001:1133419740166115359>項目(Item)：{game_name}\n"
-            f"<:No_002:1133419757215953039>時間(Time)：{時間}\n"
-            f"<:No_003:1133419774500671518>人數(People)：{人數}\n"
-            f"<:No_004:1133419788014731325>備註(Remark)：{備註}\n"
-            f"<:No_005:1133419804255076525>語音房連結(channel)：\n"
-            f"<:No_011:1167260028315639889> https://discord.com/channels/{ctx.guild.id}/{頻道.id}\n"
-            "╰ ꒷꒦꒷ ͝ ꒦₍ꐑxꐑ₎꒦ ͝ ꒷ ͝ ꒦\n"
-        )
-
-        # 先 ping 身分組
-        channel2 = ctx.channel
-        await channel2.send(f"{role_mention}")
-
-        if role_mention2 != "":
-            await channel2.send(f"{role_mention2}")
-
-        # 再發揪團內容
-        msg = await ctx.send(message_content)
-        member_nick = ctx.author.nick or ctx.author.display_name
-        channel = ctx.channel
+        view = GameSelectView(ctx, 頻道)
 
         try:
-            if ctx.guild is not None and isinstance(channel, discord.TextChannel):
-                thread = await channel.create_thread(
-                    name=f"{member_nick}",
-                    message=msg,
-                )
-                await thread.send(
-                    "布蕾布布蕾！\n布丁幫你創好專屬討論串囉\n結束之後記得在這裡講一聲喔"
-                )
-            else:
-                print("[DEBUG] /揪團: 無法建立 thread（不是 guild 或不是文字頻道）")
+            await ctx.send(
+                "請從下方選單選擇這次揪團的遊戲：",
+                view=view,
+            )
         except Exception as e:
-            print(f"[DEBUG] /揪團: 建立 thread 失敗：{e}")
+            print(f"[DEBUG] /揪團: 送出選單訊息失敗：{e}")
+            await ctx.send("發生錯誤，無法顯示遊戲選單 QQ，請稍後再試。")
 
     # ====== /隨機抽獎 ======
     @commands.hybrid_command(name="隨機抽獎", help="從指定身分組抽出得獎者")

@@ -34,6 +34,15 @@ CHANNEL_ID13 = int(os.getenv("CHANNEL_ID13")) # ban 留存
 CHANNEL_ID14 = int(os.getenv("CHANNEL_ID14")) # 自介發布
 CHANNEL_ID15 = int(os.getenv("CHANNEL_ID15")) # 自介留存
 CHANNEL_ID17 = int(os.getenv("CHANNEL_ID17")) # 流水麵線
+CHANNEL_ID22 = int(os.getenv("CHANNEL_ID22")) # 曬照
+CHANNEL_ID23 = int(os.getenv("CHANNEL_ID23")) # 曬圖
+
+# 你要自動開討論串的頻道（自行增減）
+AUTO_THREAD_CHANNEL_IDS = {
+    CHANNEL_ID22,   # 曬照
+    CHANNEL_ID23,  # 曬圖
+}
+
 id_card = int(os.getenv("id_card")) #一次改名卡
 
 ROLE_ID1 = int(os.getenv("ROLE_ID1")) 
@@ -334,7 +343,47 @@ async def on_message(message):
                     print(f"未知錯誤 : {e}")
 
     # ----- 訊息改名(v) -----
-    
+
+    # ----- 自動開串(^) -----
+
+    if (message.channel.id in AUTO_THREAD_CHANNEL_IDS
+        and not message.author.bot
+        and isinstance(message.channel, discord.TextChannel)):
+
+        # 避免同一則訊息重複建立討論串
+        if message.thread is None:
+            thread_name = make_thread_name(message)
+
+            try:
+                await message.create_thread(
+                    name=thread_name,
+                    auto_archive_duration=1440
+                )
+            except discord.Forbidden:
+                pass
+            except discord.HTTPException:
+                pass
+
+    # ----- 自動開串(v) -----
+
+    await bree.process_commands(message)
+
+
+
+def make_thread_name(message: discord.Message) -> str:
+    content = (message.content or "").strip()
+
+    # 有文字：用訊息文字當標題
+    if content:
+        name = content.replace("\n", " ").strip()
+        return name[:100]  # Discord thread 名稱上限 100
+
+    # 沒文字：用「[發的人的名稱]分享的內容」
+    author_name = message.author.global_name or message.author.display_name or message.author.name
+    name = f"{author_name}分享的內容"
+    return name[:100]
+
+
 def contains_http_or_https(message_content):
     return 'http' in message_content or 'https' in message_content
 

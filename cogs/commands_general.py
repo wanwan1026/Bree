@@ -6,6 +6,8 @@ from discord.ext import commands
 from discord import app_commands
 from typing import Optional
 import time
+import os
+
 
 from config import (
     ROLE_ID14,
@@ -56,7 +58,11 @@ from config import (
     ROLE_GAME_ID35,
     ROLE_GAME_ID36,
     ROLE_GAME_ID37,
-    guild_id
+    guild_id,
+    one_pice,
+    ten_pice,
+    hun_pice,
+    
 )
 
 GAME_ROLE_IDS = [
@@ -130,6 +136,71 @@ GAME_OPTIONS: dict[str, dict] = {
     "other": {"label": "其他遊戲", "role_id": ROLE_GAME_ID10},
 
 }
+
+# ====== 落櫻抽獎設定（可自由改）======
+
+DRAW_PACKS = {
+    1: {"label": "單抽", "need_role_id": one_pice, "times": 1},
+    2: {"label": "十連抽", "need_role_id": ten_pice, "times": 10},
+    3: {"label": "一百連抽", "need_role_id": hun_pice, "times": 100},
+}
+
+# 多個 gif 隨機播一個（路徑要存在）
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # .../cogs
+
+GACHA_GIF_PATHS = [
+    os.path.normpath(os.path.join(BASE_DIR, "..", "assets", "gacha", "111.gif")),
+    os.path.normpath(os.path.join(BASE_DIR, "..", "assets", "gacha", "222.gif")),
+    os.path.normpath(os.path.join(BASE_DIR, "..", "assets", "gacha", "333.gif")),
+    os.path.normpath(os.path.join(BASE_DIR, "..", "assets", "gacha", "444.gif")),
+    os.path.normpath(os.path.join(BASE_DIR, "..", "assets", "gacha", "555.gif")),
+]
+
+GACHA_GIF_STAY_SECONDS = 5
+
+# 階梯式獎池（可自由新增刪減）
+# 規則：每層先看 none(沒中) 的百分比，沒中才進下一層
+LOOT_TABLE = {
+    "1": {
+        "none": 40.0,
+        # "小獎": 20.0,  # 你要也可以加
+    },
+    "2": {
+        "nitro year": 70,
+        "愛心": 50,
+        "星星": 30,
+    },
+}
+
+def roll_once_by_tiers(loot_table: dict[str, dict[str, float]]) -> str:
+    tier_keys = sorted(loot_table.keys(), key=lambda x: int(x))
+    for tk in tier_keys:
+        tier = loot_table[tk]
+        miss_pct = float(tier.get("none", 0.0))
+
+        # 先判定 miss：miss 才去下一層
+        if random.random() < (miss_pct / 100.0):
+            continue
+
+        # 沒 miss：從本層獎項（排除 none）依權重抽
+        prizes = {k: float(v) for k, v in tier.items() if k != "none" and float(v) > 0}
+        if not prizes:
+            continue
+
+        total = sum(prizes.values())
+        r = random.random() * total
+        acc = 0.0
+        for name, w in prizes.items():
+            acc += w
+            if r <= acc:
+                return name
+        return next(iter(prizes.keys()))
+
+    return "none"
+
+def roll_many(times: int) -> list[str]:
+    return [roll_once_by_tiers(LOOT_TABLE) for _ in range(times)]
 
 
 def build_game_role_map(guild: discord.Guild) -> dict[str, int]:
@@ -412,6 +483,104 @@ class GeneralCommands(commands.Cog):
     @commands.hybrid_command(name="hello", help="跟布丁打招呼～")
     async def hello(self, ctx: commands.Context):
         await ctx.send("你好！")
+
+    # ====== /落櫻抽獎 ======
+    @commands.hybrid_command(name="落櫻抽獎", help="使用櫻花抽獎券抽獎")
+    @app_commands.describe(抽數="選擇抽獎種類")
+    @app_commands.choices(抽數=[
+        app_commands.Choice(name="單抽", value=1),
+        app_commands.Choice(name="十連抽", value=2),
+        app_commands.Choice(name="一百連抽", value=3),
+    ])
+    async def sakura_gacha(
+        self,
+        ctx: commands.Context,
+        抽數: app_commands.Choice[int],
+    ):
+        # slash 進來要 defer，避免 3 秒 timeout
+        if ctx.interaction is not None:
+            await ctx.defer()
+
+        await self._run_sakura_gacha(ctx, 抽數.value)
+
+
+
+    async def _run_sakura_gacha(self, ctx: commands.Context, pack_key: int):
+        if ctx.guild is None:
+            await ctx.send("這個指令只能在伺服器裡使用。")
+            return
+
+        if pack_key not in (1, 2, 3):
+            await ctx.send("抽數只能是 1(單抽) / 2(十連抽) / 3(一百連抽)")
+            return
+
+        guild: discord.Guild = ctx.guild
+        member: discord.Member = ctx.author
+
+        pack = DRAW_PACKS.get(pack_key)
+        if not pack:
+            await ctx.send("抽數選項錯誤。")
+            return
+
+        need_role = guild.get_role(pack["need_role_id"])
+        if need_role is None:
+            await ctx.send("設定錯誤：找不到對應的抽獎券身分組（role id 不存在）。")
+            return
+
+        if need_role not in member.roles:
+            await ctx.send(f"你沒有 `{need_role.name}`，不能使用 {pack['label']} 喔～")
+            return
+
+        # 2) 隨機播放 GIF
+        gif_candidates = [p for p in GACHA_GIF_PATHS if os.path.exists(p)]
+        gif_msg = None
+        if gif_candidates:
+            gif_path = random.choice(gif_candidates)
+            try:
+                gif_msg = await ctx.send(file=discord.File(gif_path))
+
+                # ✅ 這裡開始算時間：訊息「已送出」後，固定停 3 秒
+                await asyncio.sleep(GACHA_GIF_STAY_SECONDS)
+
+            except Exception as e:
+                print(f"[DEBUG] 抽獎 gif 送出失敗：{e}")
+
+        # 3) 刪掉 GIF
+        if gif_msg:
+            try:
+                await gif_msg.delete()
+            except discord.HTTPException:
+                pass
+
+        # 4) 扣券
+        try:
+            await member.remove_roles(need_role, reason="使用落櫻抽獎券後自動扣除")
+        except discord.HTTPException as e:
+            print(f"[DEBUG] 移除抽獎券失敗：{e}")
+            await ctx.send("抽獎券扣除失敗（Bot 權限/身分組階級不足），已中止抽獎。")
+            return
+
+        # 5) 抽獎
+        times = int(pack["times"])
+        results = roll_many(times)
+
+        # 6) 統計
+        counts: dict[str, int] = {}
+        for r in results:
+            counts[r] = counts.get(r, 0) + 1
+
+        lines = [
+            f"- {prize} × {c}"
+            for prize, c in sorted(counts.items(), key=lambda x: (-x[1], x[0]))
+        ]
+
+        embed = discord.Embed(
+            title=f"🌸 落櫻抽獎結果｜{pack['label']} ({times} 抽)",
+            description="\n".join(lines) if lines else "（沒有結果）",
+            color=discord.Color.from_rgb(241, 174, 194),
+        )
+        await ctx.send(content=f"{member.mention} 消耗 `{need_role.name}`！抽獎完成！", embed=embed)
+
 
     # ====== /增加vip房成員 ======
     @commands.hybrid_command(name="增加vip房成員", help="將指定成員加入 vip 語音房 !")

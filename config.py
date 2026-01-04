@@ -77,3 +77,8 @@ ROLE_GAME_ID36 = int(os.getenv("ROLE_GAME_ID36"))
 ROLE_GAME_ID37 = int(os.getenv("ROLE_GAME_ID37"))
 
 guild_id = int(os.getenv("guild_id"))
+
+# === lottery ===
+one_pice = int(os.getenv("ROLE_ID23"))
+ten_pice = int(os.getenv("ROLE_ID24"))
+hun_pice = int(os.getenv("ROLE_ID25"))

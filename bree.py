@@ -36,11 +36,13 @@ CHANNEL_ID15 = int(os.getenv("CHANNEL_ID15")) # 自介留存
 CHANNEL_ID17 = int(os.getenv("CHANNEL_ID17")) # 流水麵線
 CHANNEL_ID22 = int(os.getenv("CHANNEL_ID22")) # 曬照
 CHANNEL_ID23 = int(os.getenv("CHANNEL_ID23")) # 曬圖
+CHANNEL_ID24 = int(os.getenv("CHANNEL_ID24")) # 創作
 
 # 你要自動開討論串的頻道（自行增減）
 AUTO_THREAD_CHANNEL_IDS = {
     CHANNEL_ID22,   # 曬照
     CHANNEL_ID23,  # 曬圖
+    CHANNEL_ID24,  # 創作
 }
 
 id_card = int(os.getenv("id_card")) #一次改名卡

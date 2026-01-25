@@ -62,7 +62,8 @@ from config import (
     one_pice,
     ten_pice,
     hun_pice,
-    
+
+    ROLE_ID26
 )
 
 GAME_ROLE_IDS = [
@@ -163,13 +164,14 @@ GACHA_GIF_STAY_SECONDS = 5
 # 規則：每層先看 none(沒中) 的百分比，沒中才進下一層
 LOOT_TABLE = {
     "1": {
-        "none": 40.0,
-        # "小獎": 20.0,  # 你要也可以加
+        "none":10.0,
+        "吉吉很開心地收到你的櫻花": 40.0,
+        "要步要放個抽獎背景歌": 20.0,  # 你要也可以加
+        "吉吉的祝福加持": 10.0,
     },
     "2": {
-        "nitro year": 70,
-        "愛心": 50,
-        "星星": 30,
+        "吉吉給你大大的抱抱": 490,
+        "天選之人就是你！": 5,
     },
 }
 
@@ -564,6 +566,18 @@ class GeneralCommands(commands.Cog):
         times = int(pack["times"])
         results = roll_many(times)
 
+        # 5.5) 如果抽到「天選之人」就給身分組
+        if "天選之人就是你！" in results:
+            win_role = guild.get_role(ROLE_ID26)
+            if win_role is None:
+                print("[DEBUG] 設定錯誤：找不到 ROLE_ID26 對應的身分組")
+            else:
+                if win_role not in member.roles:
+                    try:
+                        await member.add_roles(win_role, reason="落櫻抽獎：抽到天選之人")
+                    except discord.HTTPException as e:
+                        print(f"[DEBUG] 給天選身分組失敗：{e}")
+
         # 6) 統計
         counts: dict[str, int] = {}
         for r in results:
@@ -579,7 +593,11 @@ class GeneralCommands(commands.Cog):
             description="\n".join(lines) if lines else "（沒有結果）",
             color=discord.Color.from_rgb(241, 174, 194),
         )
-        await ctx.send(content=f"{member.mention} 消耗 `{need_role.name}`！抽獎完成！", embed=embed)
+        extra = ""
+        if "天選之人就是你！" in results:
+            extra = "\n 恭喜你獲得了「天選之人」身分組！"
+
+        await ctx.send(content=f"{member.mention} 消耗 `{need_role.name}`！抽獎完成！{extra}", embed=embed)
 
 
     # ====== /增加vip房成員 ======

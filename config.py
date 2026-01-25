@@ -38,6 +38,8 @@ ROLE_ID20 = int(os.getenv("ROLE_ID20"))
 ROLE_ID21 = int(os.getenv("ROLE_ID21"))
 ROLE_ID22 = int(os.getenv("ROLE_ID22"))
 
+ROLE_ID26 = int(os.getenv("ROLE_ID26"))
+
 ROLE_GAME_ID1 = int(os.getenv("ROLE_GAME_ID1"))
 ROLE_GAME_ID2 = int(os.getenv("ROLE_GAME_ID2"))
 ROLE_GAME_ID3 = int(os.getenv("ROLE_GAME_ID3"))

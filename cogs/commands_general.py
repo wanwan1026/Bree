@@ -164,9 +164,9 @@ GACHA_GIF_STAY_SECONDS = 5
 # 規則：每層先看 none(沒中) 的百分比，沒中才進下一層
 LOOT_TABLE = {
     "1": {
-        "none":10.0,
+        "none": 8.613,
         "<3 阿吉很開心地收到你的櫻花 <3": 40.0,
-        "要不要放個抽獎背景歌 ? ": 20.0,  # 你要也可以加
+        "要不要放個抽獎背景歌 ? ": 20.0,
         "阿吉的祝福加持 ʕ•ᴥ•ʔ ": 10.0,
     },
     "2": {
@@ -597,7 +597,24 @@ class GeneralCommands(commands.Cog):
         if "天選之人就是你！" in results:
             extra = "\n 恭喜你獲得了「天選之人」身分組！"
 
-        await ctx.send(content=f"{member.mention} 消耗 `{need_role.name}`！抽獎完成！{extra}", embed=embed)
+        buy_link = "https://discord.com/channels/1071783924998623253/1464913954433269882"
+
+        # 依 pack['label'] 決定顯示用文字
+        ticket_text_map = {
+            "單抽": "粉櫻御賞券(單抽)",
+            "十連抽": "粉櫻御賞券(十抽)",
+            "一百連抽": "粉櫻御賞券(百抽)",
+        }
+        ticket_text = ticket_text_map.get(pack["label"], need_role.name)
+
+        await ctx.send(
+            content=(
+                f"{member.mention} 已消耗 **{ticket_text}**！抽獎完成！{extra}\n"
+                f"如要繼續抽獎請至 {buy_link} 購買抽獎卷"
+            ),
+            embed=embed,
+        )
+
 
 
     # ====== /增加vip房成員 ======

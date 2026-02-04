@@ -320,7 +320,7 @@ async def on_message(message):
                         "￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n"
                         "> * 聊天等級 10 等後可以看別人的自我介紹！\n"
                         "> * 歡迎各位成員邀請親朋好友入群同樂！\n"
-                        ">\n"
+                        "> \n"
                         "> * DC群連結：https://discord.gg/UHP9UnZXQr",
                         delete_after=10  # ← 10秒後自動刪除（你可改秒數）
                     )

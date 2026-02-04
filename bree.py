@@ -308,24 +308,72 @@ async def on_message(message):
             channel_act = bree.get_channel(CHANNEL_ID15)
             member_link = f"<@!{message.author.id}>"
 
-            max_retries = 5  # 最大重試次數
-            retry_delay = 5  # 重試之間的延遲（秒）
+            max_retries = 5
+            retry_delay = 5
 
             for _ in range(max_retries):
                 try:
-                    await message.author.send(f"{member_link} \n### 已經成功發布自介囉 (❍ᴥ❍ʋ)\n￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n> * 聊天等級 10 等後可以看別人的自我介紹！ \n> * 歡迎各位成員邀請親朋好友入群同樂！\n> \n> * DC群連結：https://discord.gg/UHP9UnZXQr")
-                    # await channel_act00.send(f"{member_link} 已經成功發布囉 (❍ᴥ❍ʋ)")                
-                    await channel_act.send(f"{member_link} \n {message.content}", files=[await f.to_file() for f in message.attachments])
+                    # ✅ 改：在當前頻道發提示，並自動刪除避免洗版
+                    await message.channel.send(
+                        f"{member_link}\n"
+                        "### 已經成功發布自介囉 (❍ᴥ❍ʋ)\n"
+                        "￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\n"
+                        "> * 聊天等級 10 等後可以看別人的自我介紹！\n"
+                        "> * 歡迎各位成員邀請親朋好友入群同樂！\n"
+                        ">\n"
+                        "> * DC群連結：https://discord.gg/UHP9UnZXQr",
+                        delete_after=10  # ← 10秒後自動刪除（你可改秒數）
+                    )
+
+                    # 發到自介展示頻道
+                    await channel_act.send(
+                        f"{member_link}\n{message.content}",
+                        files=[await f.to_file() for f in message.attachments]
+                    )
+
+                    # 刪掉原本使用者在輸入頻道的訊息
                     await message.delete()
-                    break  # 成功後跳出循環
+                    break
+
                 except Exception as e:
-                    await asyncio.sleep(retry_delay)  # 等待一段時間後重試
+                    await asyncio.sleep(retry_delay)
+
         else:
+            # 格式不對：刪使用者訊息 + 在同頻道提示並自動刪除
             await message.delete()
-            user = message.author
-            await user.send(f"請複製以下發文格式才可以順利發布自介喔！\n另外此頻道是用來發布自介並非閒聊，請注意使用方式！\n發布自介頻道傳送門：https://discord.com/channels/1071783924998623253/1161678416534319225\n────────只是分隔線────────")
-            await user.send("˚୨・──・┈ ・ʚ♡ɞ・┈・──・୧˚\n╭˚₊ʚ暱稱ଓ・\n┊˚₊ʚ生日ଓ・\n┊˚₊ʚ年齡ଓ・\n┊˚₊ʚ性別ଓ・\n┊˚₊ʚ來自ଓ・\n┊˚₊ʚ星座ଓ・\n┊˚₊ʚ身高ଓ・\n┊˚₊ʚ感情ଓ・\n┊˚₊ʚ專長ଓ・\n┊˚₊ʚ興趣ଓ・\n┊˚₊ʚ遊戲ଓ・\n┊˚₊ʚ時段ଓ・\n┊˚₊ʚ加友ଓ・\n╰˚₊ʚ私訊ଓ・\n\nTo.落櫻紛飛的一句話或在哪裡發現我們的：")
-    
+
+            await message.channel.send(
+                f"<@!{message.author.id}>\n"
+                "請複製以下發文格式才可以順利發布自介喔！\n"
+                "另外此頻道是用來發布自介並非閒聊，請注意使用方式！\n"
+                "發布自介頻道傳送門：https://discord.com/channels/1071783924998623253/1161678416534319225\n"
+                "────────只是分隔線────────",
+                delete_after=10
+            )
+
+            await message.channel.send(
+                "```"
+                "˚୨・──・┈ ・ʚ♡ɞ・┈・──・୧˚\n"
+                "╭˚₊ʚ暱稱ଓ・\n"
+                "┊˚₊ʚ生日ଓ・\n"
+                "┊˚₊ʚ年齡ଓ・\n"
+                "┊˚₊ʚ性別ଓ・\n"
+                "┊˚₊ʚ來自ଓ・\n"
+                "┊˚₊ʚ星座ଓ・\n"
+                "┊˚₊ʚ身高ଓ・\n"
+                "┊˚₊ʚ感情ଓ・\n"
+                "┊˚₊ʚ專長ଓ・\n"
+                "┊˚₊ʚ興趣ଓ・\n"
+                "┊˚₊ʚ遊戲ଓ・\n"
+                "┊˚₊ʚ時段ଓ・\n"
+                "┊˚₊ʚ加友ଓ・\n"
+                "╰˚₊ʚ私訊ଓ・\n\n"
+                "To.落櫻紛飛的一句話或在哪裡發現我們的："
+                "```",
+                delete_after=10
+            )
+
+
     # ----- 自介抓訊息(v) -----
 
     # ----- 訊息改名(^) -----

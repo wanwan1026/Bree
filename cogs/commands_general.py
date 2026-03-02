@@ -248,6 +248,29 @@ def member_has_server_tag(member: discord.Member) -> bool:
 
     return True
 
+def chunk_mentions(mentions: list[str], limit: int = 1024, sep: str = ", ") -> list[str]:
+    """把 mentions 分段，每段長度 <= limit（for embed field value）"""
+    chunks = []
+    buf = ""
+
+    for m in mentions:
+        # 如果要加上這個 mention，會超過限制，就先把目前 buf 推進 chunks
+        addition = (sep if buf else "") + m
+        if len(buf) + len(addition) > limit:
+            if buf:
+                chunks.append(buf)
+                buf = m
+            else:
+                # 理論上 mention 不會超過 1024，但保險：硬切
+                chunks.append(m[:limit])
+                buf = m[limit:]
+        else:
+            buf += addition
+
+    if buf:
+        chunks.append(buf)
+
+    return chunks
 
 # ===== Flag 定義們 =====
 class vip_add_member_Flags(commands.FlagConverter):
@@ -778,8 +801,14 @@ class GeneralCommands(commands.Cog):
             title="抽獎清單",
             color=discord.Color.from_rgb(241, 174, 194),
         )
-        member_list = ", ".join(member.mention for member in all_members)
-        embed.add_field(name="成員", value=member_list, inline=False)
+
+        mentions = [member.mention for member in all_members]
+        chunks = chunk_mentions(mentions, limit=1024, sep=", ")
+
+        for i, part in enumerate(chunks, start=1):
+            # Discord 對 field name 也有限制(256)，這裡很安全
+            field_name = "成員" if i == 1 else f"成員（續 {i}）"
+            embed.add_field(name=field_name, value=part, inline=False)
 
         await ctx.send(embed=embed)
 

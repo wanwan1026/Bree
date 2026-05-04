@@ -120,8 +120,8 @@ GAME_OPTIONS: dict[str, dict] = {
     "決戰！平安京": {"label": "決戰！平安京", "role_id": ROLE_GAME_ID33}, 
     "Super Animal Royale": {"label": "Super Animal Royale", "role_id": ROLE_GAME_ID21}, 
 
-    "maple": {"label": "楓之谷", "role_id": ROLE_GAME_ID15}, 
-    "majsoul": {"label": "雀魂麻將", "role_id": ROLE_GAME_ID16}, 
+    # "maple": {"label": "楓之谷", "role_id": ROLE_GAME_ID15}, 
+    # "majsoul": {"label": "雀魂麻將", "role_id": ROLE_GAME_ID16}, 
     "repo": {"label": "REPO", "role_id": ROLE_GAME_ID17}, 
     "shope": {"label": "夢之形", "role_id": ROLE_GAME_ID22}, 
     "dream": {"label": "卡厄思夢境", "role_id": ROLE_GAME_ID1}, 

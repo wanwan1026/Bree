@@ -117,7 +117,7 @@ GAME_OPTIONS: dict[str, dict] = {
     "delta": {"label": "三角洲行動", "role_id": ROLE_GAME_ID31}, 
     "six": {"label": "燕雲十六聲", "role_id": ROLE_GAME_ID37}, 
     "roblox": {"label": "ROBLOX", "role_id": ROLE_GAME_ID13},
-    "決戰！平安京": {"label": "決戰！平安京", "role_id": ROLE_GAME_ID33}, 
+    "MECCHA CHAMELEON 超級變色龍": {"label": "MECCHA CHAMELEON 超級變色龍", "role_id": ROLE_GAME_ID33}, 
     "Super Animal Royale": {"label": "Super Animal Royale", "role_id": ROLE_GAME_ID21}, 
 
     # "maple": {"label": "楓之谷", "role_id": ROLE_GAME_ID15}, 

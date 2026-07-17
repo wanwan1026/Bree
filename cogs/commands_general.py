@@ -126,7 +126,7 @@ GAME_OPTIONS: dict[str, dict] = {
     "shope": {"label": "夢之形", "role_id": ROLE_GAME_ID22}, 
     "dream": {"label": "卡厄思夢境", "role_id": ROLE_GAME_ID1}, 
 
-    "vitor": {"label": "勝利女神妮姬", "role_id": ROLE_GAME_ID6}, 
+    "vitor": {"label": "幻獸帕魯 Palworld", "role_id": ROLE_GAME_ID6}, 
     "sky": {"label": "崩壞：星穹鐵道", "role_id": ROLE_GAME_ID3}, 
     "god": {"label": "原神", "role_id": ROLE_GAME_ID14}, 
     "wuth": {"label": "鳴潮", "role_id": ROLE_GAME_ID2},

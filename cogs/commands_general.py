@@ -133,7 +133,7 @@ GAME_OPTIONS: dict[str, dict] = {
     "zero": {"label": "絕區零", "role_id": ROLE_GAME_ID5},
 
     "nte":{"label":"異環 Neverness to Everness","role_id": ROLE_GAME_ID27},
-    "far":{"label":"遙遙西土 Far Far West","role_id": ROLE_GAME_ID29},
+    "far":{"label":"瑪奇 Mobile","role_id": ROLE_GAME_ID29},
     "hel2":{"label":"絕地戰兵2  Helldivers 2","role_id": ROLE_GAME_ID18},
 
     "talk": {"label": "聊天", "role_id": ROLE_GAME_ID12},

@@ -508,6 +508,70 @@ class GeneralCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    # ====== /help ======
+    @app_commands.command(
+        name="help",
+        description="查看布丁的功能說明與隱私權政策"
+    )
+    async def help_command(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title="🍮 布丁｜功能說明",
+            description=(
+                "布丁是本伺服器使用的社群功能機器人。\n\n"
+                "目前主要提供以下功能："
+            ),
+            color=discord.Color.from_rgb(241, 174, 194)
+        )
+
+        embed.add_field(
+            name="🎮 `/揪團`",
+            value=(
+                "尋找一起遊玩的成員。\n"
+                "可選擇遊戲、時間、人數、備註及語音頻道，"
+                "並通知持有對應遊戲身分組的成員。"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🌸 `/落櫻抽獎`",
+            value=(
+                "使用指定的抽獎券身分組進行抽獎。\n"
+                "抽中特殊獎項時，可以取得特殊顏色的獎勵身分組。"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🔒 隱私權政策",
+            value=(
+                "布丁只會在提供上述功能所必要的範圍內處理 Discord 資料。\n"
+                "完整隱私權政策請點擊下方按鈕查看。"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(
+            text="如對資料使用或刪除有疑問，請聯絡伺服器管理團隊。"
+        )
+
+        view = discord.ui.View()
+
+        privacy_button = discord.ui.Button(
+            label="查看隱私權政策",
+            style=discord.ButtonStyle.link,
+            url="https://github.com/wanwan1026/Bree/blob/main/PRIVACY.md",
+            emoji="🔒"
+        )
+
+        view.add_item(privacy_button)
+
+        await interaction.response.send_message(
+            embed=embed,
+            view=view,
+            ephemeral=True
+        )
+
     # ====== /hello ======
     @commands.hybrid_command(name="hello", help="跟布丁打招呼～")
     async def hello(self, ctx: commands.Context):

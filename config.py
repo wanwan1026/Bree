@@ -20,8 +20,8 @@ CHANNEL_ID20 = int(os.getenv("CHANNEL_ID20"))  # 時光膠囊寄送
 CHANNEL_ID21 = int(os.getenv("CHANNEL_ID21"))  # 時光膠囊回收
 
 # === 時光膠囊頻道(每年更換) ===
-TIME_CAPSULE_SOURCE_CHANNEL_ID = 1439139068549271673  # 抓訊息的原始頻道
-TIME_CAPSULE_RELAY_CHANNEL_ID  = 1439139369515614249  # 收集／重發的頻道
+TIME_CAPSULE_SOURCE_CHANNEL_ID = 1562811497430782068  # 抓訊息的原始頻道
+TIME_CAPSULE_RELAY_CHANNEL_ID  = 1562811716398751827  # 收集／重發的頻道
 
 # === tag ===
 TAG_GUILD_ID = int(os.getenv("guild_id")) 
